@@ -18,10 +18,8 @@ void printProcesses(struct dirent *dirItem){
   strcat(filePath, "/cmdline");
 
   FILE *cmdlineFile = fopen(filePath, "r");
-  if (cmdlineFile == NULL){
+  if (cmdlineFile == NULL)
     perror("cmdline file not found for a process");
-    exit -1;
-  }
   
   //grab first line of cmdline file, i.e. the process name
   char *processName = malloc(100);
@@ -43,7 +41,7 @@ int printDirectory() {
       return -1;
   }
 
-  while(dirItem = readdir(directory)){
+  while((dirItem = readdir(directory))){
   
       //check if entry is of type 4 (folder) and if name is numerical
       if ((dirItem->d_type == 4) && (isdigit(*(dirItem->d_name)))) 
