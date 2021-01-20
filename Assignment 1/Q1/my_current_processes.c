@@ -1,3 +1,11 @@
+/**
+    This project was created by YOUR NAME HERE and Tristian Labanowich
+    Student numbers YOUR STUDEND NUMBER and 301422226
+    SFU ID YOUR ID and tal8 
+    This program displays current running processes with their names and IDS
+*/
+
+
 #include <stdio.h>
 #include <dirent.h>
 #include <string.h>
@@ -16,15 +24,22 @@ void print_processes(struct dirent *DirItem){
   strcat(filePath, TOP_PATH);
   strcat(filePath, DirItem->d_name);
   strcat(filePath, "/cmdline");
-
   FILE *cmdlineFile = fopen(filePath, "r");
   if (cmdlineFile == NULL)
     perror("cmdline file not found for a process");
   
-  //grab first line of cmdline file, i.e. the process name
+  //grab first line of cmdline file, i.e. the process path
   char *processName = malloc(100);
+  //NEW BLOCK HERE
+  char delim = '/'; // to parse process from file path 
+  char *val; // stores value
   fgets(processName, 100, cmdlineFile);
-  printf("%s\n", processName);
+  if((val = strrchr(processName, delim)) != NULL){ // if it is NULL we don't want it as the process does not have a name
+    memmove(val, val +1, strlen(val)); // cut out leading /
+    printf("%s\n", val);
+  }
+  // NEW BLOCK ENDS
+  //printf("%s\n", processName)
   
   fclose(cmdlineFile);
   free(filePath);
