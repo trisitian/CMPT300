@@ -1,0 +1,3 @@
+Question 2: took approximately 1 hour (mainly due to the fact that I am still relarning C).
+I leaned how much information is stored in proc! as well as how to calculate memory utilization.
+This question seemed very reasonable for what it was. 
