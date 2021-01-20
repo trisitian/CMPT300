@@ -3,3 +3,8 @@ For question 1, approximately 2-3 hours were spent on reviewing basic operations
             Pointers are still quite confusing, but the compiler outputs help a lot with setting the correct type for variables.
             It was also a good practice on making Makefiles.
 
+
+For question 4, approximately 3 hours were spent on tackling the actual question.
+(Jinhan) I used a tacky way to get around the limitations brought about by C. For the OS name, I looked up some documentations regarding the version file in Linux, and they seem to follow a convention.
+            I tell the program to try and find the line "PRETTY_NAME=", then told it to start printing from index 13 of the captured string, thus printing the OS name until a " symbol is hit.
+            It's a good review on loops and conditionals.
