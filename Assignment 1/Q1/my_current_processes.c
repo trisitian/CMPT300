@@ -4,17 +4,17 @@
 #include <ctype.h>
 #include <stdlib.h>
 
-const char topPath[] = "/proc/";
+const char TOP_PATH[] = "/proc/";
 
-void printProcesses(struct dirent *dirItem){
+void print_processes(struct dirent *DirItem){
 
   //print PID and tab
-  printf("%s\t", dirItem->d_name);
+  printf("%s\t", DirItem->d_name);
 
   //grab path to cmdline file 
   char *filePath = malloc(100);
-  strcat(filePath, topPath);
-  strcat(filePath, dirItem->d_name);
+  strcat(filePath, TOP_PATH);
+  strcat(filePath, DirItem->d_name);
   strcat(filePath, "/cmdline");
 
   FILE *cmdlineFile = fopen(filePath, "r");
@@ -30,32 +30,30 @@ void printProcesses(struct dirent *dirItem){
   free(filePath);
 }
 
-int printDirectory() {
+void print_directory() {
 
-  struct dirent *dirItem;
-  DIR *directory = opendir(topPath);
+  struct dirent *DirItem;
+  DIR *Directory = opendir(TOP_PATH);
 
   //check if directory can be opened
-  if (directory == NULL) {
+  if (Directory == NULL)
       perror("/proc directory not found");
-      return -1;
-  }
 
-  while((dirItem = readdir(directory))){
+  while((DirItem = readdir(Directory))){
   
       //check if entry is of type 4 (folder) and if name is numerical
-      if ((dirItem->d_type == 4) && (isdigit(*(dirItem->d_name)))) 
-          printProcesses(dirItem);
+      if ((DirItem->d_type == 4) && (isdigit(*(DirItem->d_name)))) 
+          print_processes(DirItem);
 
   }
 
-  closedir(directory);
-  return 0;
+  closedir(Directory);
+
 }
 
 int main() {
     
-    printDirectory();
+    print_directory();
 
     return 0;
 }
