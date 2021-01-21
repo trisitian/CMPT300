@@ -1,7 +1,7 @@
 /**
-    This project was created by Tristian Labanowich and YOUR NAME HERE
-    Student numbers 301422226 and YOUR STUDEND NUMBER
-    SFU ID tal8 and YOUR ID
+    This project was created by Tristian Labanowich and Jinhan Liu
+    Student numbers 301422226 and 301430717
+    SFU ID tal8 and jla769
     This program displays memory utilization of a program
 */
 
