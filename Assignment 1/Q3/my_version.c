@@ -1,3 +1,10 @@
+/**
+    This project was created by YOUR NAME HERE and Tristian Labanowich
+    Student numbers YOUR STUDEND NUMBER and 301422226
+    SFU ID YOUR ID and tal8 
+    This program displays current running processes with their names and IDS
+*/
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
