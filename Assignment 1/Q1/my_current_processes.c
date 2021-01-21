@@ -1,7 +1,7 @@
 /**
-    This project was created by YOUR NAME HERE and Tristian Labanowich
-    Student numbers YOUR STUDEND NUMBER and 301422226
-    SFU ID YOUR ID and tal8 
+    This project was created by Jinhan Liu and Tristian Labanowich
+    Student numbers 301430717 and 301422226
+    SFU ID jla769 and tal8 
     This program displays current running processes with their names and IDS
 */
 
@@ -30,16 +30,15 @@ void print_processes(struct dirent *DirItem){
   
   //grab first line of cmdline file, i.e. the process path
   char *processName = malloc(100);
-  //NEW BLOCK HERE
   char delim = '/'; // to parse process from file path 
   char *val; // stores value
   fgets(processName, 100, cmdlineFile);
   if((val = strrchr(processName, delim)) != NULL){ // if it is NULL we don't want it as the process does not have a name
     memmove(val, val +1, strlen(val)); // cut out leading /
     printf("%s\n", val);
+  }else{
+    printf("UNNAMED PROCESS\n");
   }
-  // NEW BLOCK ENDS
-  //printf("%s\n", processName)
   
   fclose(cmdlineFile);
   free(filePath);

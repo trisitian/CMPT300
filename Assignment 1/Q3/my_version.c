@@ -1,7 +1,7 @@
 /**
-    This project was created by YOUR NAME HERE and Tristian Labanowich
-    Student numbers YOUR STUDEND NUMBER and 301422226
-    SFU ID YOUR ID and tal8 
+    This project was created by Jinhan Liu and Tristian Labanowich
+    Student numbers 301430717 and 301422226
+    SFU ID jla769 and tal8 
     This program displays current running processes with their names and IDS
 */
 

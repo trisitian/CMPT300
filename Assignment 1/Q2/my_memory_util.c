@@ -24,7 +24,7 @@ void print_mem(){
         printf("An error occured");
         exit(1);
     }
-    fgets(line_contents, sizeof(line_contents), memPtr);
+    fgets(line_contents, sizeof(line_contents), memPtr); // get contents of first line
     substring = strtok(line_contents, ":");
     substring = strtok(NULL, "k");
     total = atoi(substring);
