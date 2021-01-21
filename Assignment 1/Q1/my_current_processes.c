@@ -24,6 +24,7 @@ void print_processes(struct dirent *DirItem){
   strcat(filePath, TOP_PATH);
   strcat(filePath, DirItem->d_name);
   strcat(filePath, "/cmdline");
+  
   FILE *cmdlineFile = fopen(filePath, "r");
   if (cmdlineFile == NULL)
     perror("cmdline file not found for a process");
@@ -37,7 +38,7 @@ void print_processes(struct dirent *DirItem){
     memmove(val, val +1, strlen(val)); // cut out leading /
     printf("%s\n", val);
   }else{
-    printf("UNNAMED PROCESS\n");
+    printf("KERNEL PROCESS\n");
   }
   
   fclose(cmdlineFile);

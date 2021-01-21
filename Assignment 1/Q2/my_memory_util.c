@@ -41,7 +41,7 @@ void print_mem(){
     }
     fclose(memPtr);
     result = (result/total) * 100; // apply formula as specified in instructions
-    printf("MEMORY UTILIZATION, %f\n", result); // print result
+    printf("MEMORY UTILIZATION: %.2f\n", result); // print result
 
 }
 

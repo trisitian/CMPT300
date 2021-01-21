@@ -33,7 +33,7 @@ void read_os_info(){
     }
 
     //i=13 will point to the beginning of the name, past the first quotation
-    //Reason for i<100 because i was allocated to have size of 100
+    //Reason for i<100 because infotext was allocated to have size of 100
     for (int i = 13; i<100; i++){
         if (infoText[i] == '\"'){
             printf("\n");
