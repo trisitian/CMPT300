@@ -17,7 +17,7 @@ const char TOP_PATH[] = "/proc/";
 void print_processes(struct dirent *DirItem){
 
   //print PID and tab
-  printf("%s\t", DirItem->d_name);
+  printf("%s", DirItem->d_name);
 
   //grab path to cmdline file 
   char *filePath = malloc(100);
@@ -36,10 +36,9 @@ void print_processes(struct dirent *DirItem){
   fgets(processName, 100, cmdlineFile);
   if((val = strrchr(processName, delim)) != NULL){ // if it is NULL we don't want it as the process does not have a name
     memmove(val, val +1, strlen(val)); // cut out leading /
-    printf("%s\n", val);
-  }else{
-    printf("KERNEL PROCESS\n");
+    printf("\t%s", val);
   }
+  printf("\n");
   
   fclose(cmdlineFile);
   free(filePath);
