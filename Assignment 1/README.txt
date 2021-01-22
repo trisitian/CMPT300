@@ -40,3 +40,4 @@ https://pubs.opengroup.org/onlinepubs/7908799/xsh/dirent.h.html
 https://www.tutorialspoint.com/c_standard_library/c_function_memmove.htm
 https://www.tutorialspoint.com/c_standard_library/c_function_atoi.htm
 https://www.tutorialspoint.com/c_standard_library/c_function_fopen.htm
+https://www.tutorialspoint.com/c_standard_library/c_function_strrchr.htm
