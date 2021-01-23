@@ -36,6 +36,7 @@ void print_processes(struct dirent *DirItem){
   fgets(processName, 100, cmdlineFile);
   if((val = strrchr(processName, delim)) != NULL){ // if it is NULL we don't want it as the process does not have a name
     memmove(val, val +1, strlen(val)); // cut out leading /
+    *processName = strtok(processName, " ")[0];
     printf("\t%s", val);
   }
   printf("\n");
