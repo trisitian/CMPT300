@@ -15,6 +15,16 @@ typedef struct{
     int code;
 }Command;
 
+//function to remove the newline character from fgets().
+void remove_newline(char* input){
+    for(int i = 0; i < 255; i++){
+        if (input[i] == '\n'){
+            input[i] = '\0'; 
+            break;
+        }
+    }
+}
+
 /*
 prints the string with the proper colour formatting
 colour can be redefined by user. Default is red.
@@ -23,12 +33,15 @@ void shell_print(int colour, const char* STRING){
     printf("\033[0;%im%s\033[0;37m", colour, STRING);
 }
 
+/*
+code for the theme command. Will output instructions if input is invalid.
+*/
 int change_theme(const char* NEW_COLOUR, int old_colour){
     if (strcmp(NEW_COLOUR, "red") == 0)
         return 31;
     else if (strcmp(NEW_COLOUR, "green") == 0) 
         return 32;
-    else if (strcmp(NEW_COLOUR, "orange") == 0)
+    else if (strcmp(NEW_COLOUR, "yellow") == 0)
         return 33;
     else if (strcmp(NEW_COLOUR, "blue") == 0)
         return 34;
@@ -36,10 +49,21 @@ int change_theme(const char* NEW_COLOUR, int old_colour){
         return 35;
     else if (strcmp(NEW_COLOUR, "cyan") == 0)
         return 36;
-    else if (strcmp(NEW_COLOUR, "gray") == 0)
+    else if (strcmp(NEW_COLOUR, "white") == 0)
         return 37;
-    else{
-        shell_print(old_colour, "Unknown theme.\n");
+    else if (strcmp(NEW_COLOUR, "help") == 0){
+        shell_print(old_colour, "\nAvailable themes are:\n");
+        shell_print(31, "red\n");
+        shell_print(32, "green\n");
+        shell_print(33, "yellow\n");
+        shell_print(34, "blue\n");
+        shell_print(35, "purple\n");
+        shell_print(36, "cyan\n");
+        shell_print(37, "white\n");
+        shell_print(old_colour, "Enter \"theme <colour>\" to change theme.\n\n");
+        return old_colour;
+    }else{
+        shell_print(old_colour, "Unknown theme. Type \"theme help\" for more info.\n");
         return old_colour;
     }
 }
@@ -55,14 +79,16 @@ int main(){
 
     int shell_colour = 31; //default red theme colour value
 
-    while(strcmp(input, "exit") != 10){ // For some reason strcmp is returning 10 if they are equal not 0???? 
+    while(strcmp(input, "exit") != 0){ // For some reason strcmp is returning 10 if they are equal not 0???? 
         
         int counter = 0; // for indexing array
 
         shell_print(shell_colour, "cshell$ ");
         fgets(input, sizeof(input), stdin);
+        remove_newline(input);
 
         arguments[counter] = strtok(input, delimeter); // get first argument
+
         while(arguments[counter] != NULL ){
             arguments[++counter] = strtok(NULL, delimeter); // get the rest of the arguments
         }
@@ -76,6 +102,7 @@ int main(){
          * */
         
         strcpy(command, arguments[0]); // get the first argument
+
         if(command[0] == '$'){
             char *name = strtok(command, "="); // parse the name and value, push into array EnvVariables
             memmove(name, name+1, strlen(name)); // remove the $
@@ -101,13 +128,16 @@ int main(){
                 }
             }
         }else if(strcmp(command, "theme") == 0){
-            shell_colour = change_theme(arguments[1], shell_colour);
+            if (arguments[1] != NULL)
+                shell_colour = change_theme(arguments[1], shell_colour);
+            else
+                shell_colour = change_theme(" ", shell_colour);
         }
         else {
-            printf("Current command is %s %d", command);
+            printf("Current command is %s %d\n", command);
         }
 
     }
-    shell_print(shell_colour, "goodbye");
+    shell_print(shell_colour, "Goodbye!\n");
     return 0;
 }
