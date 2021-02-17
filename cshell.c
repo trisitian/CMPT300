@@ -49,16 +49,15 @@ int main(){
             EnvVar temp;
             temp.name = name;
             temp.value = value;
-            EnvVariables[enviromentCounter] = temp;
-            enviromentCounter++;
-        }else if(strcmp(&command, "print") == 0){ // again with 10 .... not sure whats going on
+            EnvVariables[enviromentCounter++] = temp;
+        }else if(strcmp(&command, "print") == 0){
             char *token;
             for(int i = 1; i < counter; i++){
                 token = arguments[i];
                 if(token[0] == '$'){ // look through enviroment variables NEED TO ADD EDGE CASE FOR IF THE ENV VARIBALE DOES NOT EXIST / IF THERE ARE NO ENV VARIABLES
                     char *name = strtok(command, "="); // get just the name
                     memmove(name, name+1, strlen(name));
-                    for(int j = 0; j < enviromentCounter; j++){
+                    for(int j = 0; j < enviromentCounter; j++){ // for some reason only prints the most recent value
                         if(EnvVariables[j].name == name){
                             printf("%s \n", EnvVariables[j].value);
                         }
