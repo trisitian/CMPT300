@@ -140,22 +140,17 @@ int main(){
             shell_print(shell_colour, "Goodbye!\n");
             return 0;
         } else { // not built-in, pass into shell
+            int exit_status;
             int fork_value = fork();
             if (fork_value < 0) {
                 shell_print(shell_colour, "Failed to pass command into shell.");
                 continue;
             } else if (fork_value == 0) {
-
+                arguments[argument_counter + 1] = NULL;                
+                execvp(command, arguments);
             } else {
-                wait(NULL);
+                wait(&exit_status);
             }
-
-
-
-
-
-
-            printf("Current command is %s %d\n", command);
         }
 
     }
