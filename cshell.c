@@ -72,6 +72,7 @@ int main(){
     const char delimeter[2] = " ";
     char command[255];
     EnvVar EnvVariables[255]; // enviroment variables array, currently set to 255
+    Command command_log[255]; // log array
     int enviromentCounter = 0; // currently setting a global counter, we could readjust so that it initializes with NULL values and find the first null value to edit
 
     int shell_colour = 37; //default red theme colour value
@@ -87,6 +88,7 @@ int main(){
         while(arguments[argument_counter] != NULL ){
             arguments[++argument_counter] = strtok(NULL, delimeter); // get rest of the arguments
         }
+        //*****BUG: cannot handle tab characters & issue with double
         
         /**check arguments[0]:
          * If is starts with $ create a new enviroment variable
@@ -99,15 +101,15 @@ int main(){
         strcpy(command, arguments[0]); // copy first argument as command
 
         if (command[0] == '$'){
-            char *name = strtok(command, "="); // parse the name and value, push into array EnvVariables
+            char *name = strtok(command, "="); // parse name and value, push into array EnvVariables
             memmove(name, name+1, strlen(name)); // remove '$'
             char *value = strtok(NULL, "=");
             
             EnvVar temp;
             strcpy(temp.name, name);
             strcpy(temp.value, value);
+
             EnvVariables[enviromentCounter++] = temp;
-            enviromentCounter++;
         } else if (strcmp(command, "print") == 0) {
             char *token;
             for (int i = 1; i < argument_counter; i++) {
@@ -120,22 +122,39 @@ int main(){
                         }
                     }
                 } else {
-                    printf("%s ", arguments[i]); //*******when printing string with many spaces between words it's truncated to only one space
+                    printf("%s ", arguments[i]);
                 }
             }
             printf("\n");
-        } else if (strcmp(command, "theme") == 0){
-            //change theme
+        } else if (strcmp(command, "theme") == 0){ // change theme
             if (arguments[1] != NULL) {
                 shell_colour = change_theme(arguments[1], shell_colour);
             } else {
                 shell_colour = change_theme(" ", shell_colour);
             }
-        } else if (strcmp(command, "exit") == 0) {
-            //exit shell
+
+        } else if (strcmp(command, "log") == 0) { // output log
+
+
+        } else if (strcmp(command, "exit") == 0) { // exit shell
             shell_print(shell_colour, "Goodbye!\n");
             return 0;
-        } else {
+        } else { // not built-in, pass into shell
+            int fork_value = fork();
+            if (fork_value < 0) {
+                shell_print(shell_colour, "Failed to pass command into shell.");
+                continue;
+            } else if (fork_value == 0) {
+
+            } else {
+                wait(NULL);
+            }
+
+
+
+
+
+
             printf("Current command is %s %d\n", command);
         }
 
