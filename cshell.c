@@ -209,7 +209,6 @@ int main(int argc, char** argv){
             for (int i = 1; i < argument_counter; i++) {
                 token = arguments[i];
                 if (token[0] == '$') { // argument is EnvVar
-                    //*****NEED TO ADD EDGE CASE FOR IF THE ENV VARIBALE DOES NOT EXIST / IF THERE ARE NO ENV VARIABLES
                     print_var(token, enviromentCounter, EnvVariables, shell_colour);
                 } else {
                     // strcat needs new variable to work
