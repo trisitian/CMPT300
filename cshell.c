@@ -202,7 +202,7 @@ int main(int argc, char** argv){
         
         // edge case: read no character from file
         if (arguments[0] == NULL){
-            arguments[0] = " ";
+            continue;
         }
         strcpy(command, arguments[0]); // copy first argument as command
 
@@ -239,14 +239,12 @@ int main(int argc, char** argv){
             // create pipes
             int fd[2];
             if (pipe(fd) == -1) {
-                shell_print(shell_colour, "Failed to pass command into shell. (Failed to create pipe)");
+                shell_print(shell_colour, "Failed to execute command. (Failed to create pipe)");
             }
             // create fork
             int fork_value = fork();
             if (fork_value < 0) {
-                shell_print(shell_colour, "Failed to pass command into shell. (Failed to create fork)");
-                continue;
-
+                shell_print(shell_colour, "Failed to execute command. (Failed to create fork)");
             } else if (fork_value == 0) {   // Child
                 close(fd[0]);
                 arguments[argument_counter + 1] = NULL;
@@ -260,21 +258,25 @@ int main(int argc, char** argv){
                 if (return_value == -1) {
                     write(fd[1], "\"", 1);
                     write(fd[1], command, strlen(command));
-                    write(fd[1], "\" is not a recognized command.", 29);
+                    write(fd[1], "\" is not a recognized command.", 30);
+                    exit(-1);
                 }
                 exit(0);
             } else {    // Parent
                 close(fd[1]);
+                wait(NULL);
 
                 char buff[2];   // buffer
                 while (read(fd[0], buff, 1)){
                     shell_print(shell_colour, buff);
                 }
 
-                wait(NULL);
                 printf("\n");
             }
         }
+
+
+
     }
     return 0;
 }
