@@ -85,14 +85,28 @@ int parseLine(char *arguments[15], char input[255]){
  * @param command               command from user
  * @param EnvVariables          array of enviroment variables
  * @param enviromentCounter     counter for current max of envrioment variables
+ * @param shell_colour          theme of cshell for printing
  * */
-int assignENV(char* command, EnvVar EnvVariables[255], int enviromentCounter){
+int assignENV(char* command, EnvVar EnvVariables[255], int enviromentCounter, int shell_colour){
     // parse name and value
     char *name = strtok(command, "=");
     memmove(name, name+1, strlen(name));    // remove '$'
     char *value = strtok(NULL, "=");
     
-    // push into array EnvVariables
+    // edge case: invalid inputs
+    if ( value == NULL || name == NULL) {
+        shell_print(shell_colour, "Error: did not specify variable name or value.\n");
+        return enviromentCounter;
+    }
+
+    // if variable exists, change its value
+    for (int j = 0; j < enviromentCounter; j++) {
+        if (strcmp(EnvVariables[j].name, name) == 0) {
+            strcpy(EnvVariables[j].value, value);
+            return enviromentCounter;
+        }
+    }
+    // otherwise push new variable into array EnvVariables
     EnvVar temp;
     strcpy(temp.name, name);
     strcpy(temp.value, value);
@@ -106,13 +120,16 @@ int assignENV(char* command, EnvVar EnvVariables[255], int enviromentCounter){
  * @param token                 argument to be printed
  * @param envriomentCounter     amount of enviroment variables
  * @param EnvVaribales          array of enviroment variables
+ * @param shell_colour          theme of cshell for printing
  * returns nothing, prints inside function
  * */
 void print_var(char* token, int enviromentCounter, EnvVar EnvVariables[255], int shell_colour){
     memmove(token, token+1, strlen(token));
     for (int j = 0; j < enviromentCounter; j++) {
         if (strcmp(EnvVariables[j].name, token) == 0) {
-            shell_print(shell_colour, strcat(EnvVariables[j].value , " "));
+            shell_print(shell_colour, EnvVariables[j].value);
+            printf(" ");
+            return;
         }
     }
 }
@@ -173,7 +190,7 @@ int main(int argc, char** argv){
         remove_newline(input);
         argument_counter = parseLine(arguments, input); 
 
-        //*****BUG: cannot handle tab characters & issue with back to back spaces
+        //*****BUG: issue with back to back spaces
         
         /**check arguments[0]:
          * If is starts with $ create a new enviroment variable
@@ -186,7 +203,7 @@ int main(int argc, char** argv){
         strcpy(command, arguments[0]); // copy first argument as command
 
         if (command[0] == '$'){
-            enviromentCounter = assignENV(command, EnvVariables, enviromentCounter);
+            enviromentCounter = assignENV(command, EnvVariables, enviromentCounter, shell_colour);
         } else if (strcmp(command, "print") == 0) { // print arguments
             char *token;
             for (int i = 1; i < argument_counter; i++) {
@@ -246,7 +263,6 @@ int main(int argc, char** argv){
                 close(fd[1]);
 
                 char buff[2];   // buffer
-                printf("\n");
                 while (read(fd[0], buff, 1)){
                     shell_print(shell_colour, buff);
                 }
