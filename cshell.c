@@ -200,6 +200,10 @@ int main(int argc, char** argv){
          * otherwise call fork() on argument[0] and pass arguments[1] through arguments[n]
          * */
         
+        // edge case: read no character from file
+        if (arguments[0] == NULL){
+            arguments[0] = " ";
+        }
         strcpy(command, arguments[0]); // copy first argument as command
 
         if (command[0] == '$'){
@@ -254,8 +258,9 @@ int main(int argc, char** argv){
 
                 int return_value = execvp(command, arguments);
                 if (return_value == -1) {
+                    write(fd[1], "\"", 1);
                     write(fd[1], command, strlen(command));
-                    write(fd[1], " is not a recognized command.", 29);
+                    write(fd[1], "\" is not a recognized command.", 29);
                 }
                 exit(0);
             } else {    // Parent
