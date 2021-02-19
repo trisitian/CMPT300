@@ -131,7 +131,11 @@ void print(char* command, int argument_counter, int enviromentCounter, EnvVar En
         }
         printf("\n");
 }
-
+/**
+ * @returns, the new shell colour
+ * @param shell_colour, the current shell coulour
+ * @param arguments,the arguments array
+ * */
 int change_theme_auto(int shell_colour, char *arguments[15]){
     if (arguments[1] != NULL) {
         return change_theme(arguments[1], shell_colour);
@@ -151,7 +155,8 @@ int main(int argc, char** argv){
     Command command_log[255]; // log array
     int enviromentCounter = 0; // currently setting a global counter, we could readjust so that it initializes with NULL values and find the first null value to edit
     int argument_counter = 0; // for indexing & storing number of arguments
-
+    int shell_colour = 37; //default red theme colour value
+    //If you are passing in a script run things automatically
     if(argv[1] != NULL){
         FILE *script;
         script = fopen(argv[1], "r");
@@ -162,13 +167,26 @@ int main(int argc, char** argv){
             while(fgets(line, sizeof(line), script)){
                 remove_newline(line);
                 argument_counter = parseLine(arguments, line); 
-                printf("%s \n", line);
+                strcpy(command, arguments[0]); // copy first argument as command
+
+                if (command[0] == '$'){
+                    enviromentCounter = assignENV(command, EnvVariables, enviromentCounter);
+                } else if (strcmp(command, "print") == 0) {
+                    print(command, argument_counter,enviromentCounter,EnvVariables,arguments);
+                } else if (strcmp(command, "theme") == 0){ // change theme
+                    shell_colour = change_theme_auto(shell_colour, arguments);
+                } else if (strcmp(command, "log") == 0) { // output log
+
+                } else if (strcmp(command, "exit") == 0) { // exit shell
+                    shell_print(shell_colour, "Goodbye!\n");
+                    fclose(script);
+                    return 0;
+                }
             }
             fclose(script);
             return 0;
         }
     }
-    int shell_colour = 37; //default red theme colour value
 
     while(strcmp(input, "exit") != 0){ 
         
