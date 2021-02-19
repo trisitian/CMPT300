@@ -114,7 +114,7 @@ int assignENV(char* command, EnvVar EnvVariables[255], int enviromentCounter){
  * Does not return anything, instead prints inside the function
  * 
  * */
-void print(char* command, int argument_counter, int enviromentCounter, EnvVar EnvVariables[255],char *arguments[15]){
+void print(char* command, int argument_counter, int enviromentCounter, EnvVar EnvVariables[255],char *arguments[15], int shell_colour){
     char *token;
         for (int i = 1; i < argument_counter; i++) {
             token = arguments[i];
@@ -122,11 +122,13 @@ void print(char* command, int argument_counter, int enviromentCounter, EnvVar En
                 memmove(token, token+1, strlen(token));
                 for (int j = 0; j < enviromentCounter; j++) { // for some reason only prints the most recent value
                     if (strcmp(EnvVariables[j].name, token) == 0) {
-                        printf("%s ", EnvVariables[j].value);
+                        shell_print(shell_colour, strcat(EnvVariables[j].value , " "));
                     }
                 }
             } else {
-                printf("%s ", arguments[i]);
+                char var[80]; // need to make a copy of string for concatination to work
+                strcpy(var, arguments[i]);
+                shell_print(shell_colour, strcat(var, " "));
             }
         }
         printf("\n");
@@ -149,7 +151,6 @@ int change_theme_auto(int shell_colour, char *arguments[15]){
 int main(int argc, char** argv){
     char input[255]; // user input string, for a max of 255 characters
     char *arguments[15]; // pointer array that points to arguments; max 15 arguments
-    const char delimeter[2] = " ";
     char command[255];
     EnvVar EnvVariables[255]; // enviroment variables array, currently set to 255
     Command command_log[255]; // log array
@@ -172,7 +173,7 @@ int main(int argc, char** argv){
                 if (command[0] == '$'){
                     enviromentCounter = assignENV(command, EnvVariables, enviromentCounter);
                 } else if (strcmp(command, "print") == 0) {
-                    print(command, argument_counter,enviromentCounter,EnvVariables,arguments);
+                    print(command, argument_counter,enviromentCounter,EnvVariables,arguments,shell_colour);
                 } else if (strcmp(command, "theme") == 0){ // change theme
                     shell_colour = change_theme_auto(shell_colour, arguments);
                 } else if (strcmp(command, "log") == 0) { // output log
@@ -210,7 +211,7 @@ int main(int argc, char** argv){
         if (command[0] == '$'){
             enviromentCounter = assignENV(command, EnvVariables, enviromentCounter);
         } else if (strcmp(command, "print") == 0) {
-            print(command, argument_counter,enviromentCounter,EnvVariables,arguments);
+            print(command, argument_counter,enviromentCounter,EnvVariables,arguments,shell_colour);
         } else if (strcmp(command, "theme") == 0){ // change theme
             shell_colour = change_theme_auto(shell_colour, arguments);
         } else if (strcmp(command, "log") == 0) { // output log
