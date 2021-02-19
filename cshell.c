@@ -24,12 +24,13 @@ void remove_newline(char* input) {
     }
 }
 
-//prints with proper colour formatting.
+// prints with proper colour formatting
 void shell_print(int colour, const char* STRING){
     printf("\033[0;%im%s\033[0;37m", colour, STRING);
 }
 
-//theme command. Outputs instructions if input is invalid.
+// theme command 
+// outputs instructions if input is invalid
 int change_theme(const char* NEW_COLOUR, int old_colour){
     if (strcmp(NEW_COLOUR, "red") == 0) {
         return 31;
@@ -64,9 +65,9 @@ int change_theme(const char* NEW_COLOUR, int old_colour){
 
 /**
  * Parse line into arguments
- * @returns sizeof arguments array
- * @param arguments, a character array of arguments
- * @param input, the input that the user or script has enetered
+ * @returns                     size of arguments array
+ * @param arguments             character array of arguments
+ * @param input                 input from user or script
  * */
 int parseLine(char *arguments[15], char input[255]){
     int argument_counter = 0;
@@ -80,17 +81,18 @@ int parseLine(char *arguments[15], char input[255]){
 
 /**
  * Create new user defined variable (EnvVar)
- * @returns new enviroment counter
- * @param command, the command that was enter
- * @param EnvVariables, the array of enviroment variables
- * @param enviromentCounter, a counter for the current max of envrioment variables
- * 
+ * @returns                     new enviroment counter
+ * @param command               command from user
+ * @param EnvVariables          array of enviroment variables
+ * @param enviromentCounter     counter for current max of envrioment variables
  * */
 int assignENV(char* command, EnvVar EnvVariables[255], int enviromentCounter){
-    char *name = strtok(command, "="); // parse name and value, push into array EnvVariables
-    memmove(name, name+1, strlen(name)); // remove '$'
+    // parse name and value
+    char *name = strtok(command, "=");
+    memmove(name, name+1, strlen(name));    // remove '$'
     char *value = strtok(NULL, "=");
-        
+    
+    // push into array EnvVariables
     EnvVar temp;
     strcpy(temp.name, name);
     strcpy(temp.value, value);
@@ -101,9 +103,10 @@ int assignENV(char* command, EnvVar EnvVariables[255], int enviromentCounter){
 
 /**
  * Print arguments passed by user
- * @param envriomentCounter, the amount of enviroment variables that exist
- * @param EnvVaribales, the array of enviroment variables
- * Does not return anything, instead prints inside the function
+ * @param token                 argument to be printed
+ * @param envriomentCounter     amount of enviroment variables
+ * @param EnvVaribales          array of enviroment variables
+ * returns nothing, prints inside function
  * */
 void print_var(char* token, int enviromentCounter, EnvVar EnvVariables[255], int shell_colour){
     memmove(token, token+1, strlen(token));
@@ -116,9 +119,9 @@ void print_var(char* token, int enviromentCounter, EnvVar EnvVariables[255], int
 
 /**
  * Precheck changing theme
- * @returns, the new shell colour
- * @param shell_colour, the current shell coulour
- * @param arguments,the arguments array
+ * @returns                     new shell colour
+ * @param shell_colour          current shell coulour
+ * @param arguments             arguments array
  * */
 int change_theme_auto(int shell_colour, char *arguments[15]){
     if (arguments[1] != NULL) {
@@ -129,38 +132,40 @@ int change_theme_auto(int shell_colour, char *arguments[15]){
 }
 
 int main(int argc, char** argv){
-    char input[255];            // user input string; max 255 char
-    char *arguments[15];        // store arguments from input; max 15 arguments
-    char command[255];          // store first argument as command; max size 255
-    EnvVar EnvVariables[255];   // store user defined variables; max size 255
-    Command command_log[255];   // store past actions, timestamps & return var; max size 255
+    char input[255];            // input string;                            max 255 char
+    char *arguments[15];        // parsed arguments from input;             max 15 arguments
+    char command[255];          // first argument;                          max size 255 char
+    
+    EnvVar EnvVariables[255];   // user defined variables array;            max size 255 items
+    Command command_log[255];   // past actions, timestamps & return value; max size 255 items
 
-    //**we could readjust so that this initializes with NULL values and find the first null value to edit
-    int enviromentCounter = 0;  // currently setting a global counter
+    //****we could readjust so that this initializes with NULL values and find the first null value to edit
+    //****currently setting a global counter
+    int enviromentCounter = 0;  // # of user defined variables
 
-    int argument_counter = 0;   // for indexing & storing number of arguments
+    int argument_counter = 0;   // # of arguments, for indexing
     int shell_colour = 37;      // default white theme
+    
     int script_mode = 0;
     FILE *script;
 
-    //If you are passing in a script run things automatically
+    // check if script mode is used
     if(argv[1] != NULL){
         script = fopen(argv[1], "r");
         if(script == NULL){
             printf("\nInvalid file path. File \"%s\" needs to be on the top level.\nRunning in user mode. \n\n", argv[1]);
         }else{
-            script_mode = 1;
+            script_mode = 1;    // turns on script mode
         }
     }
 
     while(strcmp(input, "exit") != 0){ 
-        
         if (script_mode) {
-            if (!fgets(input, sizeof(input), script)){
+            if (!fgets(input, sizeof(input), script)){  // program terminates at EOF
                 fclose(script);
                 return 0;
             }
-        } else {
+        } else {    // interactive mode, get input
             shell_print(shell_colour, "cshell$ ");
             fgets(input, sizeof(input), stdin);
         }
@@ -168,7 +173,7 @@ int main(int argc, char** argv){
         remove_newline(input);
         argument_counter = parseLine(arguments, input); 
 
-        //*****BUG: cannot handle tab characters & issue with double
+        //*****BUG: cannot handle tab characters & issue with back to back spaces
         
         /**check arguments[0]:
          * If is starts with $ create a new enviroment variable
@@ -182,21 +187,25 @@ int main(int argc, char** argv){
 
         if (command[0] == '$'){
             enviromentCounter = assignENV(command, EnvVariables, enviromentCounter);
-        } else if (strcmp(command, "print") == 0) {
+        } else if (strcmp(command, "print") == 0) { // print arguments
             char *token;
             for (int i = 1; i < argument_counter; i++) {
                 token = arguments[i];
-                if (token[0] == '$') { // look through enviroment variables NEED TO ADD EDGE CASE FOR IF THE ENV VARIBALE DOES NOT EXIST / IF THERE ARE NO ENV VARIABLES
+                if (token[0] == '$') { // argument is EnvVar
+                    //*****NEED TO ADD EDGE CASE FOR IF THE ENV VARIBALE DOES NOT EXIST / IF THERE ARE NO ENV VARIABLES
                     print_var(token, enviromentCounter, EnvVariables, shell_colour);
                 } else {
-                    char var[strlen(arguments[i])]; // need to make a copy of string for concatination to work
-                    strcpy(var, arguments[i]);
+                    // strcat needs new variable to work
+                    char var[strlen(arguments[i])]; 
+                    strcpy(var, arguments[i]); 
                     shell_print(shell_colour, strcat(var, " "));
                 }
             }
             printf("\n");
+            
         } else if (strcmp(command, "theme") == 0){  // change theme
             shell_colour = change_theme_auto(shell_colour, arguments);
+
         } else if (strcmp(command, "log") == 0) {   // output log
 
         } else if (strcmp(command, "exit") == 0) {  // exit shell
@@ -205,12 +214,14 @@ int main(int argc, char** argv){
                 fclose(script);
             }
             return 0;
-        } else {                                    // for non built-in commands
+
+        } else {    // for non built-in commands
+            // create pipes
             int fd[2];
             if (pipe(fd) == -1) {
                 shell_print(shell_colour, "Failed to pass command into shell. (Failed to create pipe)");
             }
-
+            // create fork
             int fork_value = fork();
             if (fork_value < 0) {
                 shell_print(shell_colour, "Failed to pass command into shell. (Failed to create fork)");
@@ -219,26 +230,28 @@ int main(int argc, char** argv){
             } else if (fork_value == 0) {   // Child
                 close(fd[0]);
                 arguments[argument_counter + 1] = NULL;
+                
+                // redirect io
                 // dup2(fd[1], STDIN_FILENO);
                 dup2(fd[1], STDOUT_FILENO);
                 dup2(fd[1], STDERR_FILENO);
+
                 int return_value = execvp(command, arguments);
                 if (return_value == -1) {
                     write(fd[1], command, strlen(command));
                     write(fd[1], " is not a recognized command.", 29);
                 }
-                // close(fd[1]);
                 exit(0);
-
-            } else {                        // Parent
+            } else {    // Parent
                 close(fd[1]);
-                char buff[2];
+
+                char buff[2];   // buffer
                 printf("\n");
                 while (read(fd[0], buff, 1)){
                     shell_print(shell_colour, buff);
                 }
+
                 wait(NULL);
-                // close(fd[0]);
                 printf("\n");
             }
         }
