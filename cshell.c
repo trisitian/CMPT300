@@ -219,20 +219,34 @@ int main(int argc, char** argv){
             shell_print(shell_colour, "Goodbye!\n");
             return 0;
         } else { // not built-in, pass into shell
-            int exit_status;
-            int fork_value = fork();
-            if (fork_value < 0) {
-                shell_print(shell_colour, "Failed to pass command into shell.");
-                continue;
-            } else if (fork_value == 0) {
-                arguments[argument_counter + 1] = NULL;                
-                execvp(command, arguments);
-            } else {
-                wait(&exit_status);
+            int fd[2];
+            if (pipe(fd) == -1) {
+                shell_print(shell_colour, "Failed to pass command into shell. (Failed to create pipe)");
             }
 
-        }
+            int fork_value = fork();
+            if (fork_value < 0) {
+                shell_print(shell_colour, "Failed to pass command into shell. (Failed to create fork)");
+                continue;
 
+            } else if (fork_value == 0) { // Child
+                close(fd[0]);
+                arguments[argument_counter + 1] = NULL;
+                // dup2(fd[1], STDIN_FILENO);
+                dup2(fd[1], STDOUT_FILENO);
+                dup2(fd[1], STDERR_FILENO);
+                execvp(command, arguments); // This line will return the return value
+                close(fd[1]);
+                exit(0);
+            } else { // Parent
+                close(fd[1]);
+                char buff[5];
+                while (read(fd[0], buff, 1)){
+                    shell_print(shell_colour, buff);
+                }
+                wait(NULL);
+            }
+        }
     }
     shell_print(shell_colour, "Goodbye!\n");
     return 0;
