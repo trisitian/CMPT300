@@ -101,7 +101,7 @@ int assignENV(char* command, EnvVar EnvVariables[255], int enviromentCounter){
 
     EnvVariables[enviromentCounter++] = temp;
 
-    return enviromentCounter +1;
+    return enviromentCounter + 1;
 
 }
 /**
@@ -211,7 +211,7 @@ int main(int argc, char** argv){
         if (command[0] == '$'){
             enviromentCounter = assignENV(command, EnvVariables, enviromentCounter);
         } else if (strcmp(command, "print") == 0) {
-            print(command, argument_counter,enviromentCounter,EnvVariables,arguments,shell_colour);
+            print(command, argument_counter, enviromentCounter, EnvVariables, arguments, shell_colour);
         } else if (strcmp(command, "theme") == 0){ // change theme
             shell_colour = change_theme_auto(shell_colour, arguments);
         } else if (strcmp(command, "log") == 0) { // output log
@@ -236,7 +236,11 @@ int main(int argc, char** argv){
                 // dup2(fd[1], STDIN_FILENO);
                 dup2(fd[1], STDOUT_FILENO);
                 dup2(fd[1], STDERR_FILENO);
-                execvp(command, arguments); // This line will return the return value
+                int return_value = execvp(command, arguments); // This line will return the return value
+                if (return_value == -1) {
+                    write(fd[1], command, strlen(command));
+                    write(fd[1], " is not a recognized command.", 29);
+                }
                 close(fd[1]);
                 exit(0);
             } else { // Parent
@@ -246,6 +250,7 @@ int main(int argc, char** argv){
                     shell_print(shell_colour, buff);
                 }
                 wait(NULL);
+                printf("\n");
             }
         }
     }
