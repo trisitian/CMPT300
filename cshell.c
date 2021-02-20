@@ -10,10 +10,11 @@ typedef struct{
 }EnvVar;
 
 typedef struct{
-    char *name;
-    struct tm time;
+    char name[255];
+    struct tm *time;
     int code;
 }Command;
+
 
 void remove_newline(char* input) {
     for (int i = 0; i < 255; i++) {
@@ -132,6 +133,10 @@ void print_var(char* token, int enviromentCounter, EnvVar EnvVariables[255], int
             return;
         }
     }
+    //Only runs if enviroment variable is not defined
+    shell_print(shell_colour, "Error "); 
+    shell_print(shell_colour, token);
+    shell_print(shell_colour, " Is not defined\n");
 }
 
 /**
@@ -147,6 +152,23 @@ int change_theme_auto(int shell_colour, char *arguments[15]){
         return change_theme(" ", shell_colour);
     }
 }
+/**
+ * A function that adds each command entered to the log
+ * @param command_log, the log of all commands entered before current command
+ * @param commandName, the name of the command entered
+ * @param exitCode, the code either predefined in predefined functions or the fork return status
+ * @param commandCounter, the amount of commands that were entered before this call
+ * */
+void addCommand(Command command_log[255], char *commandName, int exitCode, int commandCounter){
+    time_t callTime;            // Global variable for when user calls command
+    Command temp;               // Globabl temp variable for commands (to be passed to log)
+
+    time(&callTime);
+    strcpy(temp.name, commandName);
+    temp.time = localtime(&callTime);
+    temp.code = exitCode;
+    command_log[commandCounter] = temp;
+}
 
 int main(int argc, char** argv){
     char input[255];            // input string;                            max 255 char
@@ -159,7 +181,7 @@ int main(int argc, char** argv){
     //****we could readjust so that this initializes with NULL values and find the first null value to edit
     //****currently setting a global counter
     int enviromentCounter = 0;  // # of user defined variables
-
+    int commandCounter = 0;     // # of commands that have been run (for indexing command_log)
     int argument_counter = 0;   // # of arguments, for indexing
     int shell_colour = 37;      // default white theme
     
@@ -208,6 +230,8 @@ int main(int argc, char** argv){
 
         if (command[0] == '$'){
             enviromentCounter = assignENV(command, EnvVariables, enviromentCounter, shell_colour);
+            addCommand(command_log,"Variable Assignment", 0, commandCounter); // not sure if this is needed here
+            commandCounter++;
         } else if (strcmp(command, "print") == 0) { // print arguments
             char *token;
             for (int i = 1; i < argument_counter; i++) {
@@ -222,11 +246,36 @@ int main(int argc, char** argv){
                 }
             }
             printf("\n");
+            addCommand(command_log,"Print", 0, commandCounter); 
+            commandCounter++;
             
         } else if (strcmp(command, "theme") == 0){  // change theme
+            int trace = shell_colour; // to check if the command returned properly
             shell_colour = change_theme_auto(shell_colour, arguments);
+            if(trace == shell_colour){
+                addCommand(command_log,"Theme", 1, commandCounter); 
+                commandCounter++;
+            }else{
+                addCommand(command_log,"Theme", 0, commandCounter); 
+                commandCounter++;
+            }
 
         } else if (strcmp(command, "log") == 0) {   // output log
+            if(commandCounter == 0){
+                shell_print(shell_colour,"No commands have been entered yet\n");
+            }else{
+                for(int i = 0; i < commandCounter; i++){
+                    shell_print(shell_colour, asctime(command_log[i].time));
+                    shell_print(shell_colour,"  ");
+                    shell_print(shell_colour, command_log[i].name);
+                    shell_print(shell_colour, " ");
+                    char code = command_log[i].code + '0'; // convert int to char
+                    shell_print(shell_colour,&code);
+                    printf(" \n");
+                }
+            }
+            addCommand(command_log,"log", 0, commandCounter); 
+            commandCounter++;
 
         } else if (strcmp(command, "exit") == 0) {  // exit shell
             shell_print(shell_colour, "Goodbye!\n");
@@ -240,12 +289,17 @@ int main(int argc, char** argv){
             int fd[2];
             if (pipe(fd) == -1) {
                 shell_print(shell_colour, "Failed to execute command. (Failed to create pipe)");
+                addCommand(command_log,arguments[0], -1, commandCounter); 
+                commandCounter++;
             }
             // create fork
             int fork_value = fork();
+            int fork_return_value; // for log
             if (fork_value < 0) {
                 shell_print(shell_colour, "Failed to execute command. (Failed to create fork)");
+                fork_return_value =-1;
             } else if (fork_value == 0) {   // Child
+                fork_return_value = 0;
                 close(fd[0]);
                 arguments[argument_counter + 1] = NULL;
                 
@@ -273,6 +327,8 @@ int main(int argc, char** argv){
 
                 printf("\n");
             }
+            addCommand(command_log,arguments[0],fork_return_value,commandCounter); 
+            commandCounter++;
         }
 
 
