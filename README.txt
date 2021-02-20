@@ -35,3 +35,5 @@ arrays and functions
 https://www.programiz.com/c-programming/c-arrays-functions
 reading from a file 
 https://www.tutorialspoint.com/cprogramming/c_file_io.html
+Time
+https://www.tutorialspoint.com/c_standard_library/c_function_localtime.htm

@@ -1,3 +1,10 @@
+/**This assignment was a collaboration between Jinhan Liu (301430717) and Tristian Labanowich (301422226).
+ * This is a custom shell program
+ * to run the shell run make then ./cshell
+ * to run the shell with a script run make then ./cshell <scriptname>
+ * This shell is compatible with all bash commands and can even run itself!
+ * to exit the shell call "exit"
+**/
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
@@ -230,7 +237,7 @@ int main(int argc, char** argv){
 
         if (command[0] == '$'){
             enviromentCounter = assignENV(command, EnvVariables, enviromentCounter, shell_colour);
-            addCommand(command_log,"Variable Assignment", 0, commandCounter); // not sure if this is needed here
+            addCommand(command_log,arguments[0], 0, commandCounter); // Prints entire argument as per instructions
             commandCounter++;
         } else if (strcmp(command, "print") == 0) { // print arguments
             char *token;
