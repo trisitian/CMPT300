@@ -115,6 +115,24 @@ int assignENV(char* command, EnvVar EnvVariables[255], int enviromentCounter, in
     return (enviromentCounter + 1);
 }
 
+void append_log(char* command, Command log_array[255], int return_value){
+    
+    
+
+
+
+    Command temp;
+    strcpy(temp.name, command);
+    temp.code = return_value;
+
+    for (int i = 0; i < sizeof(log_array); i++) {
+        if (log_array[i].code == NULL) {
+            log_array[i] = temp;
+            break;
+        }
+    }
+}
+
 /**
  * Print arguments passed by user
  * @param token                 argument to be printed
@@ -227,6 +245,11 @@ int main(int argc, char** argv){
             shell_colour = change_theme_auto(shell_colour, arguments);
 
         } else if (strcmp(command, "log") == 0) {   // output log
+            for (int i = 0; i < sizeof(command_log) && command_log[i].code != NULL; i++) {
+                shell_print(shell_colour, asctime(&(command_log[i].time)));
+                shell_print(shell_colour, command_log[i].name);
+                shell_print(shell_colour, command_log[i].code);
+            }
 
         } else if (strcmp(command, "exit") == 0) {  // exit shell
             shell_print(shell_colour, "Goodbye!\n");
