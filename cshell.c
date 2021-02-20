@@ -141,7 +141,7 @@ void print_var(char* token, int enviromentCounter, EnvVar EnvVariables[255], int
         }
     }
     //Only runs if enviroment variable is not defined
-    shell_print(shell_colour, "Error "); 
+    shell_print(shell_colour, "\nError "); 
     shell_print(shell_colour, token);
     shell_print(shell_colour, " Is not defined\n");
 }
@@ -320,19 +320,18 @@ int main(int argc, char** argv){
                     write(fd[1], "\"", 1);
                     write(fd[1], command, strlen(command));
                     write(fd[1], "\" is not a recognized command.", 30);
+                    printf("\n");
                     exit(-1);
                 }
                 exit(0);
-            } else {    // Parent
-                close(fd[1]);
-                wait(NULL);
+                } else {    // Parent
+                    close(fd[1]);
+                    wait(NULL);
 
-                char buff[2];   // buffer
-                while (read(fd[0], buff, 1)){
+                    char buff[2];   // buffer
+                    while (read(fd[0], buff, 1)){
                     shell_print(shell_colour, buff);
                 }
-
-                printf("\n");
             }
             addCommand(command_log,arguments[0],fork_return_value,commandCounter); 
             commandCounter++;
