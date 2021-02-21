@@ -321,17 +321,25 @@ int main(int argc, char** argv){
                     write(fd[1], command, strlen(command));
                     write(fd[1], "\" is not a recognized command.", 30);
                     printf("\n");
+                    close(fd[1]);
                     exit(-1);
                 }
+                close(fd[1]);
                 exit(0);
-                } else {    // Parent
-                    close(fd[1]);
-                    wait(NULL);
+            } else {    // Parent
+                close(fd[1]);
+                int exit_status;
+                wait(&exit_status);
+                if (script_mode == 1 && WEXITSTATUS(exit_status) != 0) {
+                    shell_print(shell_colour, "Invalid command read from script file.\ncshell will now terminate.\n");
+                    exit(-1);
+                }
 
-                    char buff[2];   // buffer
-                    while (read(fd[0], buff, 1)){
+                char buff[2];   // buffer
+                while (read(fd[0], buff, 1)){
                     shell_print(shell_colour, buff);
                 }
+                close(fd[0]);
             }
             addCommand(command_log,arguments[0],fork_return_value,commandCounter); 
             commandCounter++;
