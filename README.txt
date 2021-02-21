@@ -4,14 +4,6 @@ README for CMPT300 Assignment 2
 
 This assignment was a collaboration between Jinhan Liu (301430717) and Tristian Labanowich (301422226).
 
-This assignment took around 20-25 hours between the two of us. 
-
-Something That I learned was how important pre planing control flow is in a program (Tristian)
-I spent quite a few hours getting a bunch of the built in functions working only to realise
-when writing script mode that they should be actual functions that are called to reduce the code bloating
-which then caused issues of its own. With that being said Planning was a huge take away from This, The assignment
-seemed overwhelming at first however the two of us sat down and planned a taskboard together before even starting
-this made the production of the shell a lot more approachable and I always had a clear goal when programming.
 
 
 
