@@ -6,14 +6,21 @@ This assignment was a collaboration between Jinhan Liu (301430717) and Tristian 
 
 This assignment took around 20-25 hours between the two of us. 
 
-Something That I learned was how important pre planing control flow is in a program (Tristian)
-I spent quite a few hours getting a bunch of the built in functions working only to realise
+Tristian Labanowich:
+    Something That I learned was how important pre planing control flow is in a program.
+    I spent quite a few hours getting a bunch of the built in functions working only to realise
 when writing script mode that they should be actual functions that are called to reduce the code bloating
-which then caused issues of its own. With that being said Planning was a huge take away from This, The assignment
-seemed overwhelming at first however the two of us sat down and planned a taskboard together before even starting
+which then caused issues of its own. With that being said Planning was a huge take away from this. The assignment
+seemed overwhelming at first however the two of us sat down and planned a taskboard together (Jira) before even starting
 this made the production of the shell a lot more approachable and I always had a clear goal when programming.
 
-
+Jinhan Liu:
+    I learned the importance of refractoring code, as well as how proper commenting can help with navigating the code.
+    It's a good review on C functions and syntax, as well as a more in-depth look at pointers.
+    A lot of effort was put into setting boundaries of the user navigatable space, and catching inputs that might disrupt the program.
+    I also had the idea of using flags (int) to reduce code redundancy and make the program easier to read. E.g. script mode and interactive
+mode used to contain the same block of code, but each contained to their own loops. However, with a help of an indicator for script mode, it
+is now possible to run code specific to script mode under one loop shared with interactive mode.  
 
 
 
