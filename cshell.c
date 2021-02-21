@@ -39,28 +39,23 @@ void shell_print(int colour, const char* STRING){
 
 // theme command 
 // outputs instructions if input is invalid
-int theme_function(const char* NEW_COLOUR, const int GET_COLOUR){
-    static int theme_colour = 37;
-
-    if (GET_COLOUR == 1){
-        return theme_colour;
-    }
+int change_theme(const char* NEW_COLOUR, int old_colour){
     if (strcmp(NEW_COLOUR, "red") == 0) {
-        theme_colour = 31;
+        return 31;
     } else if (strcmp(NEW_COLOUR, "green") == 0) { 
-        theme_colour = 32;
+        return 32;
     } else if (strcmp(NEW_COLOUR, "yellow") == 0) {
-        theme_colour = 33;
+        return 33;
     } else if (strcmp(NEW_COLOUR, "blue") == 0) {
-        theme_colour = 34;
+        return 34;
     } else if (strcmp(NEW_COLOUR, "purple") == 0) {
-        theme_colour = 35;
+        return 35;
     } else if (strcmp(NEW_COLOUR, "cyan") == 0) {
-        theme_colour = 36;
+        return 36;
     } else if (strcmp(NEW_COLOUR, "white") == 0) {
-        theme_colour = 37;
+        return 37;
     } else if (strcmp(NEW_COLOUR, "help") == 0) {
-        shell_print(theme_colour, "\nAvailable themes are:\n\n");
+        shell_print(old_colour, "\nAvailable themes are:\n\n");
         shell_print(31, "red\n");
         shell_print(32, "green\n");
         shell_print(33, "yellow\n");
@@ -68,23 +63,11 @@ int theme_function(const char* NEW_COLOUR, const int GET_COLOUR){
         shell_print(35, "purple\n");
         shell_print(36, "cyan\n");
         shell_print(37, "white\n");
-        shell_print(theme_colour, "\nEnter \"theme <colour>\" to change theme.\n\n");
+        shell_print(old_colour, "\nEnter \"theme <colour>\" to change theme.\n\n");
+        return old_colour;
     } else {
-        shell_print(theme_colour, "Unknown theme. Type \"theme help\" for more info.\n");
-        return 1;
-    }
-    return 0;
-}
-
-int get_theme_colour(){
-    return theme_function(" ", 1);
-}
-
-int change_theme_auto(char *arguments[15]){
-    if (arguments[1] != NULL) {
-        return theme_function(arguments[1], 0);
-    } else {
-        return theme_function(" ", 0);
+        shell_print(old_colour, "Unknown theme. Type \"theme help\" for more info.\n");
+        return old_colour;
     }
 }
 
@@ -120,7 +103,7 @@ int assignENV(char* command, EnvVar EnvVariables[255], int enviromentCounter, in
     
     // edge case: invalid inputs
     if ( value == NULL || name == NULL) {
-        shell_print(get_theme_colour(), "Error: did not specify variable name or value.\n");
+        shell_print(shell_colour, "Error: did not specify variable name or value.\n");
         return enviromentCounter;
     }
 
@@ -152,17 +135,30 @@ void print_var(char* token, int enviromentCounter, EnvVar EnvVariables[255], int
     memmove(token, token+1, strlen(token));
     for (int j = 0; j < enviromentCounter; j++) {
         if (strcmp(EnvVariables[j].name, token) == 0) {
-            shell_print(get_theme_colour(), EnvVariables[j].value);
+            shell_print(shell_colour, EnvVariables[j].value);
             printf(" ");
             return;
         }
     }
     //Only runs if enviroment variable is not defined
-    shell_print(get_theme_colour(), "\nError: "); 
-    shell_print(get_theme_colour(), token);
-    shell_print(get_theme_colour(), " is not defined\n");
+    shell_print(shell_colour, "\nError: "); 
+    shell_print(shell_colour, token);
+    shell_print(shell_colour, " is not defined\n");
 }
 
+/**
+ * Precheck changing theme
+ * @returns                     new shell colour
+ * @param shell_colour          current shell coulour
+ * @param arguments             arguments array
+ * */
+int change_theme_auto(int shell_colour, char *arguments[15]){
+    if (arguments[1] != NULL) {
+        return change_theme(arguments[1], shell_colour);
+    } else {
+        return change_theme(" ", shell_colour);
+    }
+}
 /**
  * A function that adds each command entered to the log
  * @param command_log, the log of all commands entered before current command
@@ -194,6 +190,7 @@ int main(int argc, char** argv){
     int enviromentCounter = 0;  // # of user defined variables
     int commandCounter = 0;     // # of commands that have been run (for indexing command_log)
     int argument_counter = 0;   // # of arguments, for indexing
+    int shell_colour = 37;      // default white theme
     
     int script_mode = 0;
     FILE *script;
@@ -215,7 +212,7 @@ int main(int argc, char** argv){
                 return 0;
             }
         } else {    // interactive mode, get input
-            shell_print(get_theme_colour(), "cshell$ ");
+            shell_print(shell_colour, "cshell$ ");
             fgets(input, sizeof(input), stdin);
         }
 
@@ -239,7 +236,7 @@ int main(int argc, char** argv){
         strcpy(command, arguments[0]); // copy first argument as command
 
         if (command[0] == '$'){
-            enviromentCounter = assignENV(command, EnvVariables, enviromentCounter, get_theme_colour());
+            enviromentCounter = assignENV(command, EnvVariables, enviromentCounter, shell_colour);
             addCommand(command_log,arguments[0], 0, commandCounter); // Prints entire argument as per instructions
             commandCounter++;
         } else if (strcmp(command, "print") == 0) { // print arguments
@@ -247,12 +244,12 @@ int main(int argc, char** argv){
             for (int i = 1; i < argument_counter; i++) {
                 token = arguments[i];
                 if (token[0] == '$') { // argument is EnvVar
-                    print_var(token, enviromentCounter, EnvVariables, get_theme_colour());
+                    print_var(token, enviromentCounter, EnvVariables, shell_colour);
                 } else {
                     // strcat needs new variable to work
                     char var[strlen(arguments[i])]; 
                     strcpy(var, arguments[i]); 
-                    shell_print(get_theme_colour(), strcat(var, " "));
+                    shell_print(shell_colour, strcat(var, " "));
                 }
             }
             printf("\n");
@@ -260,21 +257,27 @@ int main(int argc, char** argv){
             commandCounter++;
             
         } else if (strcmp(command, "theme") == 0){  // change theme
-            int return_value = change_theme_auto(arguments);
-            addCommand(command_log,"Theme", return_value, commandCounter); 
-            commandCounter++;
+            int trace = shell_colour; // to check if the command returned properly
+            shell_colour = change_theme_auto(shell_colour, arguments);
+            if(trace == shell_colour){
+                addCommand(command_log,"Theme", 1, commandCounter); 
+                commandCounter++;
+            }else{
+                addCommand(command_log,"Theme", 0, commandCounter); 
+                commandCounter++;
+            }
 
         } else if (strcmp(command, "log") == 0) {   // output log
             if(commandCounter == 0){
-                shell_print(get_theme_colour(),"No commands have been entered yet\n");
+                shell_print(shell_colour,"No commands have been entered yet\n");
             }else{
                 for(int i = 0; i < commandCounter; i++){
-                    shell_print(get_theme_colour(), asctime(command_log[i].time));
-                    shell_print(get_theme_colour(),"  ");
-                    shell_print(get_theme_colour(), command_log[i].name);
-                    shell_print(get_theme_colour(), " ");
+                    shell_print(shell_colour, asctime(command_log[i].time));
+                    shell_print(shell_colour,"  ");
+                    shell_print(shell_colour, command_log[i].name);
+                    shell_print(shell_colour, " ");
                     char code = command_log[i].code + '0'; // convert int to char
-                    shell_print(get_theme_colour(), &code);
+                    shell_print(shell_colour,&code);
                     printf(" \n");
                 }
             }
@@ -282,7 +285,7 @@ int main(int argc, char** argv){
             commandCounter++;
 
         } else if (strcmp(command, "exit") == 0) {  // exit shell
-            shell_print(get_theme_colour(), "Goodbye!\n");
+            shell_print(shell_colour, "Goodbye!\n");
             if (script_mode){
                 fclose(script);
             }
@@ -290,18 +293,20 @@ int main(int argc, char** argv){
 
         } else {    // for non built-in commands
             // create pipes
-            int kernel_return_value = 0; // for log
             int fd[2];
             if (pipe(fd) == -1) {
-                shell_print(get_theme_colour(), "Failed to execute command. (Failed to create pipe)");
-                kernel_return_value = 1;
+                shell_print(shell_colour, "Failed to execute command. (Failed to create pipe)");
+                addCommand(command_log,arguments[0], -1, commandCounter); 
+                commandCounter++;
             }
             // create fork
             int fork_value = fork();
+            int fork_return_value; // for log
             if (fork_value < 0) {
-                shell_print(get_theme_colour(), "Failed to execute command. (Failed to create fork)");
-                kernel_return_value = 1;
+                shell_print(shell_colour, "Failed to execute command. (Failed to create fork)");
+                fork_return_value =-1;
             } else if (fork_value == 0) {   // Child
+                fork_return_value = 0;
                 close(fd[0]);
                 arguments[argument_counter + 1] = NULL;
                 
@@ -325,21 +330,18 @@ int main(int argc, char** argv){
                 close(fd[1]);
                 int exit_status;
                 wait(&exit_status);
-                if (WEXITSTATUS(exit_status) != 0) {
-                    if (script_mode == 1){
-                        shell_print(get_theme_colour(), "Invalid command read from script file.\ncshell will now terminate.\n");
-                        exit(-1);
-                    }
-                    kernel_return_value = 1;
+                if (script_mode == 1 && WEXITSTATUS(exit_status) != 0) {
+                    shell_print(shell_colour, "Invalid command read from script file.\ncshell will now terminate.\n");
+                    exit(-1);
                 }
 
                 char buff[2];   // buffer
                 while (read(fd[0], buff, 1)){
-                    shell_print(get_theme_colour(), buff);
+                    shell_print(shell_colour, buff);
                 }
                 close(fd[0]);
             }
-            addCommand(command_log, arguments[0], kernel_return_value, commandCounter); 
+            addCommand(command_log,arguments[0],fork_return_value,commandCounter); 
             commandCounter++;
         }
     }
