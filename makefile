@@ -1,5 +1,5 @@
-all: cshell.c
+all: lets-talk.c
 	gcc -Wall -o lets-talk lets-talk.c
 
 clean: 
-	$(RM) cshell
+	$(RM) lets-talk
