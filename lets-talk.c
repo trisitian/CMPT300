@@ -38,7 +38,7 @@ void *awaitInput(void *ptr){
 
 
 int main(int argc, char* argv[]){
-
+    messageList = List_create();
     // see in instructions, 4 threads as asked to create
     pthread_t keyboardIn, UDPOut, UDPIn, screenOut; 
     //see instrunctions, 3 arguments that are to be passed in when lets-talk is called
@@ -54,6 +54,7 @@ int main(int argc, char* argv[]){
     localPort = (int)argv[1];
     remoteClientIP = (int)argv[2];
     remotePort = (int)argv[3];
+    
     // char *test;
     // test = Encrypt("hello world");
     // printf("%s \n", test);
