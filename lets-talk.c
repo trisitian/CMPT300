@@ -2,7 +2,7 @@
 #include <string.h>
 #include <pthread.h>
 #include "./list.h"
-List *messageList = List_create();
+List *messageList;
 //not quite working, cipher should go something like this
 // char* Encrypt(char* message){
 //     char encryptedMessage[256];
@@ -44,11 +44,12 @@ int main(int argc, char* argv[]){
     //see instrunctions, 3 arguments that are to be passed in when lets-talk is called
     int remoteClientIP, localPort, remotePort;
     int length = 0;
-    while(argv[++length] != NULL);// did you know that there is no fricken "size of" for arrays in c? and the method you do use doesn't seem to work!??!?! ugh I miss c++ 
-    if(length != 4){
+    
+    if(argc != 4){
         printf("Error missing argument, enter port number on running machine, IP, and port to listen on\n") ;
         return 1;
     }
+
     // as per convention in her examples
     localPort = (int)argv[1];
     remoteClientIP = (int)argv[2];
@@ -56,6 +57,6 @@ int main(int argc, char* argv[]){
     // char *test;
     // test = Encrypt("hello world");
     // printf("%s \n", test);
-
+    printf("%d", List_count(messageList));
     return 0;
 }
