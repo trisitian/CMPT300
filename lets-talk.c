@@ -69,11 +69,12 @@ void *awaitInput(void *ptr){
         encrypt(input);
         //LOCK WILL NEED TO GO HERE
         List_add(senderList, input);
-        //printf("There are %d arguments in the list\n", List_count(senderList));
+        printf("There are %d arguments in the list\n", List_count(senderList));
         //LOCK WILL NEED TO UNLOCK HERE
         fgets(input, sizeof(input), stdin);
         removeNewline(input);
     }
+    return 0;
 }
 // Thread for receiving messages
 void *receivingThread(struct threadArg *threadArgs){
@@ -108,7 +109,9 @@ void *receivingThread(struct threadArg *threadArgs){
             perror("Failed to receive message");
             exit(EXIT_FAILURE);
         }
-
+        //add lock here
+        List_add(recieverList, buffer);
+        // add unlock here
         printf("%s", buffer);
         close(sockfd);
         break;
@@ -150,13 +153,22 @@ void *sendingThread(struct threadArg *threadArgs){
     int sourceLen = sizeof(struct sockaddr_in);
     char *buffer = "Hello from the other side~";
     int bufferlen;
-
+    while(1){
     // send message
-    bufferlen = sendto(sockfd, buffer, 27, 0, (const struct sockaddr *) &receiver, sourceLen);
-    if (bufferlen < 0){
-            perror("Failed to send message");
-            exit(EXIT_FAILURE);
+        while(List_count(senderList) != 0){
+            //printf("There are currently %d messages in the list\n", List_count(senderList));
+            buffer = List_curr(senderList);
+            //decrypt(buffer);
+            bufferlen = sendto(sockfd, buffer, 27, 0, (const struct sockaddr *) &receiver, sourceLen);
+            List_remove(senderList);
+            //printf("There are currently %d messages in the list\n", List_count(senderList));
+            if (bufferlen < 0){
+                perror("Failed to send message");
+                exit(EXIT_FAILURE);
+            }
+        }
     }
+
     close(sockfd);
     // DEPRECATED
     // struct sockaddr_in addressTo;
@@ -174,13 +186,15 @@ void *sendingThread(struct threadArg *threadArgs){
 
 // thread for printing into terminal
 void *screenOutThread(struct threadArg *threadArgs){
-    // close(fds[1]);
-    // char buffer[4000];
-    // while (1){
-    //     while (read(fds[0], buffer, 4000) == 1){
-    //         printf("%s",buffer);
-    //     }
-    // }
+    char *buffer;
+    while(1){
+        if(List_count(recieverList) != 0){
+            buffer = List_first(recieverList);
+            decrypt(buffer);
+            printf("%s\n", buffer);
+            List_remove(recieverList);
+        }
+    }
     return 0;
 }
 
@@ -229,14 +243,14 @@ int main(int argc, char* argv[]){
     // threadArguments.sockfd = &sockfd;
 
     //initialize threads
-    // pthread_create(&keyboardIn, NULL, awaitInput, NULL);
-    pthread_create(&UDPIn, NULL, (void *)receivingThread, &threadArguments);
+    pthread_create(&keyboardIn, NULL, awaitInput, NULL);
     pthread_create(&UDPOut, NULL, (void *)sendingThread, &threadArguments);
-    pthread_create(&screenOut, NULL, (void *)screenOutThread, &threadArguments);
+    pthread_create(&UDPIn, NULL, (void *)receivingThread, &threadArguments);
+    pthread_create(&screenOut, NULL, (void *)screenOutThread, NULL);
     
-    // pthread_join(keyboardIn, NULL);
-    pthread_join(UDPIn, NULL);
+    pthread_join(keyboardIn, NULL);
     pthread_join(UDPOut, NULL);
+    pthread_join(UDPIn, NULL);
     pthread_join(screenOut, NULL);
 
     
