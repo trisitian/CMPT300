@@ -63,20 +63,21 @@ void Decrypt(char message[4000]){
 // Thread for receiving messages
 void *receivingThread(struct threadArg *threadArgs){
 
+    // create socket
     int sockfd;
     if ( (sockfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0){ // IPv4, UDP, default protocal
         perror("Failed to create socket");
         exit(EXIT_FAILURE);
     } 
 
+    // assign values to socket address
     struct sockaddr_in receiver, source;
-
     bzero(&receiver, sizeof(receiver));
     receiver.sin_family = AF_INET;
     receiver.sin_addr.s_addr = htonl(2130706433); // htonl(ip); // uncooment functions to use actual IPs
     receiver.sin_port = htons(6000); // htons(port);
 
-    // bind socket to struct
+    // bind socket to socket address
     if ( bind(sockfd, (const struct sockaddr*) &receiver, sizeof(receiver)) < 0 ){
         perror("Failed to bind socket");
         exit(EXIT_FAILURE);
@@ -85,11 +86,12 @@ void *receivingThread(struct threadArg *threadArgs){
     unsigned int sourceLen = sizeof(struct sockaddr_in);
     char buffer[4000];
     int bufferlen;
+    // should be able to do without the while loop, as recvfrom seems to hang the thread until message is received
     while (1){
         bufferlen = recvfrom(sockfd, buffer, 4000, 0, (struct sockaddr *) &source, &sourceLen); 
         if (bufferlen < 0){
             perror("Failed to receive message");
-            exit(1);
+            exit(EXIT_FAILURE);
         }
 
         printf("%s", buffer);
@@ -117,14 +119,15 @@ void *receivingThread(struct threadArg *threadArgs){
 // Thread for sending messages
 void *sendingThread(struct threadArg *threadArgs){
 
-    struct sockaddr_in receiver;
-
+    // create socket
     int sockfd;
     if ( (sockfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0){ // IPv4, UDP, default protocal
         perror("Failed to create socket");
         exit(EXIT_FAILURE);
     } 
 
+    // assign values to socket address
+    struct sockaddr_in receiver;
     receiver.sin_family = AF_INET;
     receiver.sin_addr.s_addr = htonl(2130706433); // htonl(ip); // uncooment functions to use actual IPs
     receiver.sin_port = htons(6000); // htons(port);    
@@ -133,10 +136,11 @@ void *sendingThread(struct threadArg *threadArgs){
     char *buffer = "Hello from the other side~";
     int bufferlen;
 
+    // send message
     bufferlen = sendto(sockfd, buffer, 27, 0, (const struct sockaddr *) &receiver, sourceLen);
     if (bufferlen < 0){
             perror("Failed to send message");
-            exit(1);
+            exit(EXIT_FAILURE);
     }
     close(sockfd);
     // DEPRECATED
