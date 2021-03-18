@@ -8,17 +8,6 @@
 #include <math.h>
 #include "./list.h"
 List *senderList, *recieverList;
-
-
-//FUNCTION FOR KEYBOARD INPUT
-// void *awaitInput(void *ptr){
-//     char line;
-//     scanf("%c", &line);
-//     while(line != "!exit"){
-//         scanf("%c", line);
-//     }
-// }
-
 // struct to carry variables into threads
 struct threadArg{
     int *sockfd;                    // socket file descriptor
@@ -43,7 +32,7 @@ int IPtoInt(char* normalForm){
  * does changes in place @returns nothing
  * encryption function
  * */
-void Encrypt(char message[4000]){
+void encrypt(char message[4000]){
     for(int i = 0; message[i] != '\0'; i++){
         message[i] = (message[i] + 26) %256;
     }
@@ -54,12 +43,38 @@ void Encrypt(char message[4000]){
  * does changes in place @returns nothing
  * decryption function
  * */
-void Decrypt(char message[4000]){
+void decrypt(char message[4000]){
     for(int i = 0; message[i]  != '\0'; i++){
         message[i] = (message[i] -26) %256;
     }
 }
 
+/**
+ * remove new line, borrowed from assignment2
+ * */
+void removeNewline(char input[4000]) {
+    for (int i = 0; i < 4000; i++) {
+        if (input[i] == '\n') {
+            input[i] = '\0'; 
+            break;
+        }
+    }
+}
+//Thread for getting keyboard input
+void *awaitInput(void *ptr){
+    char input[4000];
+    fgets(input, sizeof(input), stdin);
+    removeNewline(input);
+    while(strcmp(input, "!exit") !=0){
+        encrypt(input);
+        //LOCK WILL NEED TO GO HERE
+        List_add(senderList, input);
+        //printf("There are %d arguments in the list\n", List_count(senderList));
+        //LOCK WILL NEED TO UNLOCK HERE
+        fgets(input, sizeof(input), stdin);
+        removeNewline(input);
+    }
+}
 // Thread for receiving messages
 void *receivingThread(struct threadArg *threadArgs){
 
@@ -214,10 +229,12 @@ int main(int argc, char* argv[]){
     // threadArguments.sockfd = &sockfd;
 
     //initialize threads
+    pthread_create(&keyboardIn, NULL, awaitInput, NULL);
     pthread_create(&UDPIn, NULL, (void *)receivingThread, &threadArguments);
     pthread_create(&UDPOut, NULL, (void *)sendingThread, &threadArguments);
     pthread_create(&screenOut, NULL, (void *)screenOutThread, &threadArguments);
     
+    pthread_join(keyboardIn, NULL);
     pthread_join(UDPIn, NULL);
     pthread_join(UDPOut, NULL);
     pthread_join(screenOut, NULL);
