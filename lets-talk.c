@@ -229,12 +229,12 @@ int main(int argc, char* argv[]){
     // threadArguments.sockfd = &sockfd;
 
     //initialize threads
-    pthread_create(&keyboardIn, NULL, awaitInput, NULL);
+    // pthread_create(&keyboardIn, NULL, awaitInput, NULL);
     pthread_create(&UDPIn, NULL, (void *)receivingThread, &threadArguments);
     pthread_create(&UDPOut, NULL, (void *)sendingThread, &threadArguments);
     pthread_create(&screenOut, NULL, (void *)screenOutThread, &threadArguments);
     
-    pthread_join(keyboardIn, NULL);
+    // pthread_join(keyboardIn, NULL);
     pthread_join(UDPIn, NULL);
     pthread_join(UDPOut, NULL);
     pthread_join(screenOut, NULL);
