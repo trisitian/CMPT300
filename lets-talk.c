@@ -25,11 +25,13 @@ struct threadArg{
     struct sockaddr_in *socketInOut;// socket struct
 };
 
+
+// Will cause seg fault if user enters incorrect IP
 int IPtoInt(char* normalForm){
     long first, second, third, fourth;
     const char delimeter[2] = ".";
     first = pow(256,3)*atoi(strtok(normalForm, delimeter));
-    second = pow(256,3)*atoi(strtok(NULL, delimeter));
+    second = pow(256,2)*atoi(strtok(NULL, delimeter));
     third = 256*atoi(strtok(NULL, delimeter));
     fourth = atoi(strtok(NULL, delimeter));
     return first + second + third+ fourth;
@@ -67,8 +69,7 @@ void *receivingThread(struct threadArg *threadArgs){
         exit(EXIT_FAILURE);
     } 
 
-    struct sockaddr_in receiver;
-    struct sockaddr_in source;
+    struct sockaddr_in receiver, source;
 
     bzero(&receiver, sizeof(receiver));
     receiver.sin_family = AF_INET;
@@ -81,7 +82,7 @@ void *receivingThread(struct threadArg *threadArgs){
         exit(EXIT_FAILURE);
     }
 
-    int sourceLen = sizeof(struct sockaddr_in);
+    unsigned int sourceLen = sizeof(struct sockaddr_in);
     char buffer[4000];
     int bufferlen;
     while (1){
@@ -110,18 +111,34 @@ void *receivingThread(struct threadArg *threadArgs){
 //         write(threadArgs->fds[1], buffer, 4000);
 //     }
 // }
-
+    return 0;
 }
 
 // Thread for sending messages
 void *sendingThread(struct threadArg *threadArgs){
-    
 
+    struct sockaddr_in receiver;
 
+    int sockfd;
+    if ( (sockfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0){ // IPv4, UDP, default protocal
+        perror("Failed to create socket");
+        exit(EXIT_FAILURE);
+    } 
 
+    receiver.sin_family = AF_INET;
+    receiver.sin_addr.s_addr = htonl(2130706433); // htonl(ip); // uncooment functions to use actual IPs
+    receiver.sin_port = htons(6000); // htons(port);    
 
+    int sourceLen = sizeof(struct sockaddr_in);
+    char *buffer = "Hello from the other side~";
+    int bufferlen;
 
-    
+    bufferlen = sendto(sockfd, buffer, 27, 0, (const struct sockaddr *) &receiver, sourceLen);
+    if (bufferlen < 0){
+            perror("Failed to send message");
+            exit(1);
+    }
+    close(sockfd);
     // DEPRECATED
     // struct sockaddr_in addressTo;
     // int sourceLength = sizeof(addressTo);
@@ -133,6 +150,7 @@ void *sendingThread(struct threadArg *threadArgs){
     //         exit(EXIT_FAILURE);
     //     }
     // }
+    return 0;
 }
 
 // thread for printing into terminal
@@ -144,6 +162,7 @@ void *screenOutThread(struct threadArg *threadArgs){
     //         printf("%s",buffer);
     //     }
     // }
+    return 0;
 }
 
 int main(int argc, char* argv[]){
