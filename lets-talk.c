@@ -9,27 +9,6 @@
 #include "./list.h"
 List *senderList, *recieverList;
 
-// not quite working, cipher should go something like this
-// char* Encrypt(char* message){
-//     char encryptedMessage[256];
-//     char temp;
-//     for(int i = 0; i < strlen(message); i++){
-//         temp = message[i] + 26;
-//         strncat(encryptedMessage, &temp, 1);
-//     }
-//     return encryptedMessage;
-// }
-
-// char* Decrypt(char* message){
-//     char decryptedMessage[256];
-//     char temp;
-//     for(int i = 0; i < strlen(message); i++){
-//         temp = message[i] - 26;
-//         decryptedMessage[i] = temp;
-//     }
-//     return decryptedMessage;
-// }
-
 
 //FUNCTION FOR KEYBOARD INPUT
 // void *awaitInput(void *ptr){
@@ -55,6 +34,28 @@ int IPtoInt(char* normalForm){
     fourth = atoi(strtok(NULL, delimeter));
     return first + second + third+ fourth;
 
+}
+
+/**
+ * Basic ceaser cypher 
+ * does changes in place @returns nothing
+ * encryption function
+ * */
+void Encrypt(char message[4000]){
+    for(int i = 0; message[i] != '\0'; i++){
+        message[i] = (message[i] + 26) %256;
+    }
+}
+
+/**
+ * Basic ceaser cypher 
+ * does changes in place @returns nothing
+ * decryption function
+ * */
+void Decrypt(char message[4000]){
+    for(int i = 0; message[i]  != '\0'; i++){
+        message[i] = (message[i] -26) %256;
+    }
 }
 
 // Thread for receiving messages
@@ -166,6 +167,8 @@ int main(int argc, char* argv[]){
     }
     remotePort = atoi(argv[3]);
 
+    //printf("%s \n", test);
+
     // // init sockets
     // int sockfd;
     // if ( (sockfd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0){ // IPv4, UDP, default protocal
@@ -187,7 +190,7 @@ int main(int argc, char* argv[]){
     // threadArguments.socketInOut = &addressOut;
     // threadArguments.sockfd = &sockfd;
 
-    // initialize threads
+    //initialize threads
     pthread_create(&UDPIn, NULL, (void *)receivingThread, &threadArguments);
     pthread_create(&UDPOut, NULL, (void *)sendingThread, &threadArguments);
     pthread_create(&screenOut, NULL, (void *)screenOutThread, &threadArguments);
@@ -196,9 +199,6 @@ int main(int argc, char* argv[]){
     pthread_join(UDPOut, NULL);
     pthread_join(screenOut, NULL);
 
-    // char *test;
-    // test = Encrypt("hello world");
-    // printf("%s \n", test);
-    // printf("%d", List_count(messageList));
+    
     return 0;
 }
