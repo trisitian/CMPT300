@@ -42,7 +42,6 @@ List *senderList, *recieverList;
 
 // struct to carry variables into threads
 struct threadArg{
-    int fds[2];                     // pipe
     int *sockfd;                    // socket file descriptor
     struct sockaddr_in *socketInOut;// socket struct
 };
@@ -60,43 +59,90 @@ int IPtoInt(char* normalForm){
 
 // Thread for receiving messages
 void *receivingThread(struct threadArg *threadArgs){
-    close(threadArgs->fds[0]);
-    char buffer[4000];
-    struct sockaddr_in addressSource;
-    int sourceLength = sizeof(addressSource);
-    while (1){
-        // receive messages
-        if ( recvfrom(*(threadArgs->sockfd), buffer, 4000, 0, (struct sockaddr*) &addressSource, (unsigned int *)&sourceLength) < 0){
-            perror("Error receiving message");
-            exit(EXIT_FAILURE);
-        };
-        write(threadArgs->fds[1], buffer, 4000);
+
+    int sockfd;
+    if ( (sockfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0){ // IPv4, UDP, default protocal
+        perror("Failed to create socket");
+        exit(EXIT_FAILURE);
+    } 
+
+    struct sockaddr_in receiver;
+    struct sockaddr_in source;
+
+    bzero(&receiver, sizeof(receiver));
+    receiver.sin_family = AF_INET;
+    receiver.sin_addr.s_addr = htonl(2130706433); // htonl(ip); // uncooment functions to use actual IPs
+    receiver.sin_port = htons(6000); // htons(port);
+
+    // bind socket to struct
+    if ( bind(sockfd, (const struct sockaddr*) &receiver, sizeof(receiver)) < 0 ){
+        perror("Failed to bind socket");
+        exit(EXIT_FAILURE);
     }
+
+    int sourceLen = sizeof(struct sockaddr_in);
+    char buffer[4000];
+    int bufferlen;
+    while (1){
+        bufferlen = recvfrom(sockfd, buffer, 4000, 0, (struct sockaddr *) &source, &sourceLen); 
+        if (bufferlen < 0){
+            perror("Failed to receive message");
+            exit(1);
+        }
+
+        printf("%s", buffer);
+        close(sockfd);
+        break;
+
+    }
+    // DEPRECATED
+//     close(threadArgs->fds[0]);
+//     char buffer[4000];
+//     struct sockaddr_in addressSource;
+//     int sourceLength = sizeof(addressSource);
+//     while (1){
+//         // receive messages
+//         if ( recvfrom(*(threadArgs->sockfd), buffer, 4000, 0, (struct sockaddr*) &addressSource, (unsigned int *)&sourceLength) < 0){
+//             perror("Error receiving message");
+//             exit(EXIT_FAILURE);
+//         };
+//         write(threadArgs->fds[1], buffer, 4000);
+//     }
+// }
+
 }
 
 // Thread for sending messages
 void *sendingThread(struct threadArg *threadArgs){
-    struct sockaddr_in addressTo;
-    int sourceLength = sizeof(addressTo);
     
-    while (1){
-        // send messages
-        if ( sendto(*(threadArgs->sockfd), "Hello!", sizeof("Hello!"), 0, (struct sockaddr*) &addressTo, sourceLength) < 0 ){
-            perror("Error sending message");
-            exit(EXIT_FAILURE);
-        }
-    }
+
+
+
+
+
+    
+    // DEPRECATED
+    // struct sockaddr_in addressTo;
+    // int sourceLength = sizeof(addressTo);
+    
+    // while (1){
+    //     // send messages
+    //     if ( sendto(*(threadArgs->sockfd), "Hello!", sizeof("Hello!"), 0, (struct sockaddr*) &addressTo, sourceLength) < 0 ){
+    //         perror("Error sending message");
+    //         exit(EXIT_FAILURE);
+    //     }
+    // }
 }
 
 // thread for printing into terminal
-void *screenOutThread(int fds[2]){
-    close(fds[1]);
-    char buffer[4000];
-    while (1){
-        while (read(fds[0], buffer, 4000) == 1){
-            printf("%s",buffer);
-        }
-    }
+void *screenOutThread(struct threadArg *threadArgs){
+    // close(fds[1]);
+    // char buffer[4000];
+    // while (1){
+    //     while (read(fds[0], buffer, 4000) == 1){
+    //         printf("%s",buffer);
+    //     }
+    // }
 }
 
 int main(int argc, char* argv[]){
@@ -119,12 +165,6 @@ int main(int argc, char* argv[]){
         remoteClientIP = IPtoInt(argv[2]);
     }
     remotePort = atoi(argv[3]);
-
-    // // init pipe
-    // if (pipe(threadArguments.fds) < 0){
-    //     perror("Failed to create pipe.");
-    //     exit(EXIT_FAILURE);
-    // }
 
     // // init sockets
     // int sockfd;
@@ -150,8 +190,12 @@ int main(int argc, char* argv[]){
     // initialize threads
     pthread_create(&UDPIn, NULL, (void *)receivingThread, &threadArguments);
     pthread_create(&UDPOut, NULL, (void *)sendingThread, &threadArguments);
-    pthread_create(&screenOut, NULL, (void *)screenOutThread, threadArguments.fds);
+    pthread_create(&screenOut, NULL, (void *)screenOutThread, &threadArguments);
     
+    pthread_join(UDPIn, NULL);
+    pthread_join(UDPOut, NULL);
+    pthread_join(screenOut, NULL);
+
     // char *test;
     // test = Encrypt("hello world");
     // printf("%s \n", test);
