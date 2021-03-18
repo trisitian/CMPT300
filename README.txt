@@ -8,3 +8,7 @@ Resources Used:
 https://www.youtube.com/watch?v=Emuw71lozdA
 https://www.ibm.com/support/knowledgecenter/en/SSLTBW_2.3.0/com.ibm.zos.v2r3.bpxbd00/ptcrea.htm
 https://stackoverflow.com/questions/8223742/how-to-pass-multiple-parameters-to-a-thread-in-c
+
+converting IP to int 
+http://www.aboutmyip.com/AboutMyXApp/IP2Integer.jsp
+
