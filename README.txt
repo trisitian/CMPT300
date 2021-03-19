@@ -8,6 +8,20 @@ Resources Used:
 https://www.youtube.com/watch?v=Emuw71lozdA
 https://www.ibm.com/support/knowledgecenter/en/SSLTBW_2.3.0/com.ibm.zos.v2r3.bpxbd00/ptcrea.htm
 https://stackoverflow.com/questions/8223742/how-to-pass-multiple-parameters-to-a-thread-in-c
+https://www.tutorialspoint.com/c_standard_library/c_function_fflush.htm
+https://stackoverflow.com/questions/32205546/confused-with-network-byte-order-and-host-byte-order
+https://jameshfisher.com/2016/12/21/htons/
+https://linux.die.net/man/3/inet_aton
+https://linux.die.net/man/7/ip
+https://linux.die.net/man/2/sendto
+https://www.youtube.com/watch?v=Emuw71lozdA
+https://www.cs.rutgers.edu/~pxk/417/notes/sockets/udp.html
+https://www.geeksforgeeks.org/udp-server-client-implementation-c/
+https://www.geeksforgeeks.org/socket-programming-cc/
+https://www.binarytides.com/programming-udp-sockets-c-linux/
+https://habibiefaried.medium.com/cnet-01-basic-c-socket-programming-a818b0da5ae0
+https://beej.us/guide/bgnet/
+https://linux.die.net/man/3/sem_wait
 
 converting IP to int 
 http://www.aboutmyip.com/AboutMyXApp/IP2Integer.jsp

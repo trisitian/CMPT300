@@ -7,9 +7,11 @@
 #include <unistd.h>
 #include <math.h>
 #include <arpa/inet.h>
+#include <semaphore.h>
 #include "./list.h"
-List *senderList, *recieverList;
-pthread_mutex_t lock;
+List *senderList, *receiverList;
+pthread_mutex_t lock;   // soon deprecated
+sem_t mutexIN, mutexOUT;
 // struct to carry variables into threads
 struct threadArg{
     char *ip;
@@ -63,19 +65,20 @@ void removeNewline(char input[4000]) {
 }
 //Thread for getting keyboard input
 void *awaitInput(void *ptr){
+    sem_wait(&mutexOUT);
     char input[4000];
-    fgets(input, sizeof(input), stdin);
-    removeNewline(input);
-    while(strcmp(input, "!exit") !=0){
+    do{
+        fgets(input, sizeof(input), stdin);
+        removeNewline(input);
         encrypt(input);
         pthread_mutex_lock(&lock);
         List_add(senderList, input);
         pthread_mutex_unlock(&lock);
-        fgets(input, sizeof(input), stdin);
-        removeNewline(input);
-    }
+        // sem_post(&mutexOUT);
+    }while(strcmp(input, "!exit") != 0);
     return 0;
 }
+
 // Thread for receiving messages
 void *receivingThread(void *threadArguments){
     struct threadArg *info = (struct threadArg*)threadArguments;
@@ -102,16 +105,20 @@ void *receivingThread(void *threadArguments){
     unsigned int sourceLen = sizeof(source);
     char buffer[4000];
     int bufferlen;
+    // sem_post(&mutexIN);
     // should be able to do without the while loop, as recvfrom seems to hang the thread until message is received
     while (1){
+        // recvfrom will wait for a message, so no need for a lock
         bufferlen = recvfrom(sockfd, buffer, 4000, 0, (struct sockaddr *) &source, &sourceLen); 
         if (bufferlen < 0){
             perror("Failed to receive message");
             exit(EXIT_FAILURE);
         }
         pthread_mutex_lock(&lock);
-        List_add(recieverList, buffer);
+        List_add(receiverList, buffer);
         pthread_mutex_unlock(&lock);
+        // sem_post(&mutexIN);
+        // sem_wait(&mutexIN);
     }
     close(sockfd);
 
@@ -137,10 +144,11 @@ void *sendingThread(void *threadArguments){
     receiver.sin_addr.s_addr = inet_addr((*info).ip); // htonl(ip); // uncooment functions to use actual IPs
     receiver.sin_port = htons((*info).portOUT); // htons(port);    
 
-    char *buffer = "Hello from the other side~";
+    char *buffer;
     int bufferlen;
+    sem_post(&mutexOUT);
     while(1){
-    // send message
+        // send message
         while(List_count(senderList) != 0){
             //printf("There are currently %d messages in the list\n", List_count(senderList));
             buffer = List_curr(senderList);
@@ -155,6 +163,7 @@ void *sendingThread(void *threadArguments){
                 exit(EXIT_FAILURE);
             }
         }
+        // sem_wait(&mutexOUT);
     }
     close(sockfd);
     return 0;
@@ -162,21 +171,30 @@ void *sendingThread(void *threadArguments){
 
 // thread for printing into terminal
 void *screenOutThread(struct threadArg *threadArgs){
+    // sem_wait(&mutexIN);
     char *buffer;
     while(1){
-        if(List_count(recieverList) != 0){
-            buffer = List_first(recieverList);
+        if(List_count(receiverList) != 0){
+            buffer = List_first(receiverList);
             decrypt(buffer);
+            if (strcmp(buffer, "!exit") == 0){
+                break;
+            }
             printf("%s\n", buffer);
+            fflush(stdout);
             pthread_mutex_lock(&lock);
-            List_remove(recieverList);
+            List_remove(receiverList);
             pthread_mutex_unlock(&lock);
         }
+        // sem_wait(&mutexIN);
     }
     return 0;
 }
 
 int main(int argc, char* argv[]){
+    sem_init(&mutexIN, 0, 0); // initialize semaphore for receiveThread & screenOut
+    sem_init(&mutexOUT, 0, 0); // initialize semaphore for awaitInput & sendingThread
+    
     // check if correct num of args are passed. If not, exit
     if(argc != 4){
         perror("Error: missing argument. Enter port number on running machine, IP, and port to listen on.\n");
@@ -185,7 +203,7 @@ int main(int argc, char* argv[]){
 
     // create lists for conversations
     senderList = List_create();
-    recieverList = List_create();
+    receiverList = List_create();
 
     pthread_t keyboardIn, UDPOut, UDPIn, screenOut; // threads to handle keyboard, UDP, and output
 
@@ -202,15 +220,18 @@ int main(int argc, char* argv[]){
 
     //initialize threads
     pthread_create(&keyboardIn, NULL, awaitInput, NULL);
-    pthread_create(&UDPOut, NULL, (void *)sendingThread, &threadArguments);
     pthread_create(&UDPIn, NULL, (void *)receivingThread, &threadArguments);
+    pthread_create(&UDPOut, NULL, (void *)sendingThread, &threadArguments);
     pthread_create(&screenOut, NULL, (void *)screenOutThread, NULL);
     
     pthread_join(keyboardIn, NULL);
     exit(0);
-    // pthread_join(UDPOut, NULL);
-    // pthread_join(UDPIn, NULL);
-    // pthread_join(screenOut, NULL);
+    pthread_join(UDPOut, NULL);
+    exit(0);
+    pthread_join(UDPIn, NULL);
+    exit(0);
+    pthread_join(screenOut, NULL);
+    exit(0);
     // pthread_mutex_destroy(&lock);
     // return 0;
 }
