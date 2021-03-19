@@ -76,8 +76,8 @@ void *awaitInput(void *ptr){
     return 0;
 }
 // Thread for receiving messages
-void *receivingThread(struct threadArgs *threadArguments){
-
+void *receivingThread(void *threadArguments){
+    struct threadArg *info = (struct threadArg*)threadArguments;
     // create socket
     int sockfd;
     if ( (sockfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0){ // IPv4, UDP, default protocal
@@ -89,8 +89,8 @@ void *receivingThread(struct threadArgs *threadArguments){
     struct sockaddr_in receiver, source;
     bzero(&receiver, sizeof(receiver));
     receiver.sin_family = AF_INET;
-    receiver.sin_addr.s_addr = htonl(threadArguments.ip); // htonl(ip); // uncooment functions to use actual IPs
-    receiver.sin_port = htons(6000); // htons(port);
+    receiver.sin_addr.s_addr = htonl((*info).ip); // htonl(ip); // uncooment functions to use actual IPs
+    receiver.sin_port = htons((*info).portIN); // htons(port);
 
     // bind socket to socket address
     if ( bind(sockfd, (const struct sockaddr*) &receiver, sizeof(receiver)) < 0 ){
@@ -118,7 +118,8 @@ void *receivingThread(struct threadArgs *threadArguments){
 }
 
 // Thread for sending messages
-void *sendingThread(struct threadArgs *threadArguments){
+void *sendingThread(void *threadArguments){
+    struct threadArg *info = (struct threadArg*)threadArguments;
 
     // create socket
     int sockfd;
@@ -130,8 +131,8 @@ void *sendingThread(struct threadArgs *threadArguments){
     // assign values to socket address
     struct sockaddr_in receiver;
     receiver.sin_family = AF_INET;
-    receiver.sin_addr.s_addr = htonl(*(long *)threadArguments.ip); // htonl(ip); // uncooment functions to use actual IPs
-    receiver.sin_port = htons(6000); // htons(port);    
+    receiver.sin_addr.s_addr = htonl((*info).ip); // htonl(ip); // uncooment functions to use actual IPs
+    receiver.sin_port = htons((*info).portOUT); // htons(port);    
 
     int sourceLen = sizeof(struct sockaddr_in);
     char *buffer = "Hello from the other side~";
@@ -182,7 +183,6 @@ int main(int argc, char* argv[]){
 
     // for passing variables into threads
     struct threadArg threadArguments;               
-    threadArguments.ip = IPtoInt(argv);
     
     pthread_t keyboardIn, UDPOut, UDPIn, screenOut; // threads to handle keyboard, UDP, and output
     threadArguments.portIN = atoi(argv[1]);
