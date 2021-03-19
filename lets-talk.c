@@ -6,25 +6,26 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <math.h>
+#include <arpa/inet.h>
 #include "./list.h"
 List *senderList, *recieverList;
 // struct to carry variables into threads
 struct threadArg{
-    long ip;
+    char *ip;
     long portIN;
     long portOUT;
 };
 
-// Will cause seg fault if user enters incorrect IP
-long IPtoInt(char* normalForm){
-    long first, second, third, fourth;
-    const char delimeter[2] = ".";
-    first = pow(256,3)*atoi(strtok(normalForm, delimeter));
-    second = pow(256,2)*atoi(strtok(NULL, delimeter));
-    third = 256*atoi(strtok(NULL, delimeter));
-    fourth = atoi(strtok(NULL, delimeter));
-    return first + second + third+ fourth;
-}
+// // Will cause seg fault if user enters incorrect IP
+// long IPtoInt(char* normalForm){
+//     long first, second, third, fourth;
+//     const char delimeter[2] = ".";
+//     first = pow(256,3)*atoi(strtok(normalForm, delimeter));
+//     second = pow(256,2)*atoi(strtok(NULL, delimeter));
+//     third = 256*atoi(strtok(NULL, delimeter));
+//     fourth = atoi(strtok(NULL, delimeter));
+//     return first + second + third+ fourth;
+// }
 
 /**
  * Basic ceaser cypher 
@@ -89,7 +90,7 @@ void *receivingThread(void *threadArguments){
     struct sockaddr_in receiver, source;
     bzero(&receiver, sizeof(receiver));
     receiver.sin_family = AF_INET;
-    receiver.sin_addr.s_addr = htonl((*info).ip); // htonl(ip); // uncooment functions to use actual IPs
+    receiver.sin_addr.s_addr = inet_addr("127.0.0.1"); // takes address in network byte order
     receiver.sin_port = htons((*info).portIN); // htons(port);
 
     // bind socket to socket address
@@ -98,7 +99,7 @@ void *receivingThread(void *threadArguments){
         exit(EXIT_FAILURE);
     }
 
-    unsigned int sourceLen = sizeof(struct sockaddr_in);
+    unsigned int sourceLen = sizeof(source);
     char buffer[4000];
     int bufferlen;
     // should be able to do without the while loop, as recvfrom seems to hang the thread until message is received
@@ -130,11 +131,12 @@ void *sendingThread(void *threadArguments){
 
     // assign values to socket address
     struct sockaddr_in receiver;
+    int sourceLen = sizeof(receiver);
+
     receiver.sin_family = AF_INET;
-    receiver.sin_addr.s_addr = htonl((*info).ip); // htonl(ip); // uncooment functions to use actual IPs
+    receiver.sin_addr.s_addr = inet_addr((*info).ip); // htonl(ip); // uncooment functions to use actual IPs
     receiver.sin_port = htons((*info).portOUT); // htons(port);    
 
-    int sourceLen = sizeof(struct sockaddr_in);
     char *buffer = "Hello from the other side~";
     int bufferlen;
     while(1){
@@ -181,17 +183,18 @@ int main(int argc, char* argv[]){
     senderList = List_create();
     recieverList = List_create();
 
-    // for passing variables into threads
-    struct threadArg threadArguments;               
-    
     pthread_t keyboardIn, UDPOut, UDPIn, screenOut; // threads to handle keyboard, UDP, and output
-    threadArguments.portIN = atoi(argv[1]);
+
+    // for passing variables into threads
+    struct threadArg threadArguments;                   
+    threadArguments.portIN = atoi(argv[1]);         // assign incoming port (my port)
+    threadArguments.portOUT = atoi(argv[3]);        // assign outgoing port (remote port)
+    
     if(strcmp(argv[2], "localhost") == 0){
-        threadArguments.ip = 2130706433; // 127.0.0.1 decimal 
+        threadArguments.ip = "127.0.0.1"; // localhost 
     }else{
-        threadArguments.ip = IPtoInt(argv[2]);
+        threadArguments.ip = argv[2];
     }
-    threadArguments.portOUT = atoi(argv[3]);
 
     //initialize threads
     pthread_create(&keyboardIn, NULL, awaitInput, NULL);
@@ -204,6 +207,5 @@ int main(int argc, char* argv[]){
     pthread_join(UDPIn, NULL);
     pthread_join(screenOut, NULL);
 
-    
     return 0;
 }
