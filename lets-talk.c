@@ -10,23 +10,13 @@
 #include "./list.h"
 List *senderList, *recieverList;
 pthread_mutex_t lock;
+bool socketStatus = false;
 // struct to carry variables into threads
 struct threadArg{
     char *ip;
     long portIN;
     long portOUT;
 };
-
-// // Will cause seg fault if user enters incorrect IP
-// long IPtoInt(char* normalForm){
-//     long first, second, third, fourth;
-//     const char delimeter[2] = ".";
-//     first = pow(256,3)*atoi(strtok(normalForm, delimeter));
-//     second = pow(256,2)*atoi(strtok(NULL, delimeter));
-//     third = 256*atoi(strtok(NULL, delimeter));
-//     fourth = atoi(strtok(NULL, delimeter));
-//     return first + second + third+ fourth;
-// }
 
 /**
  * Basic ceaser cypher 
@@ -67,12 +57,28 @@ void *awaitInput(void *ptr){
     fgets(input, sizeof(input), stdin);
     removeNewline(input);
     while(strcmp(input, "!exit") !=0){
+        if(strcmp(input, "!status") == 0){
+            pthread_mutex_lock(&lock);
+            socketStatus = true;
+            pthread_mutex_unlock(&lock);
+        }
         encrypt(input);
         pthread_mutex_lock(&lock);
         List_add(senderList, input);
         pthread_mutex_unlock(&lock);
         fgets(input, sizeof(input), stdin);
         removeNewline(input);
+        if(socketStatus){
+            printf("checking status\n");
+            if(socketStatus){
+                printf("OFFLINE\n");
+                pthread_mutex_lock(&lock);
+                socketStatus = false;
+                pthread_mutex_unlock(&lock);
+            }else{
+                printf("ONLINE\n");
+            }
+        }
     }
     return 0;
 }
@@ -102,9 +108,9 @@ void *receivingThread(void *threadArguments){
     unsigned int sourceLen = sizeof(source);
     char buffer[4000];
     int bufferlen;
-    // should be able to do without the while loop, as recvfrom seems to hang the thread until message is received
     while (1){
-        bufferlen = recvfrom(sockfd, buffer, 4000, 0, (struct sockaddr *) &source, &sourceLen); 
+        bufferlen = recvfrom(sockfd, buffer, 4000, 0, (struct sockaddr *) &source, &sourceLen);
+        fflush(stdout);
         if (bufferlen < 0){
             perror("Failed to receive message");
             exit(EXIT_FAILURE);
@@ -136,20 +142,18 @@ void *sendingThread(void *threadArguments){
     receiver.sin_family = AF_INET;
     receiver.sin_addr.s_addr = inet_addr((*info).ip); // htonl(ip); // uncooment functions to use actual IPs
     receiver.sin_port = htons((*info).portOUT); // htons(port);    
-
     char *buffer = "Hello from the other side~";
     int bufferlen;
     while(1){
     // send message
         while(List_count(senderList) != 0){
-            //printf("There are currently %d messages in the list\n", List_count(senderList));
             buffer = List_curr(senderList);
             //decrypt(buffer);
+            
             bufferlen = sendto(sockfd, buffer, 27, 0, (const struct sockaddr *) &receiver, sourceLen);
             pthread_mutex_lock(&lock);
             List_remove(senderList);
             pthread_mutex_unlock(&lock);
-            //printf("There are currently %d messages in the list\n", List_count(senderList));
             if (bufferlen < 0){
                 perror("Failed to send message");
                 exit(EXIT_FAILURE);
@@ -167,6 +171,11 @@ void *screenOutThread(struct threadArg *threadArgs){
         if(List_count(recieverList) != 0){
             buffer = List_first(recieverList);
             decrypt(buffer);
+            if(strcmp(buffer, "!status") == 0){
+                pthread_mutex_lock(&lock);
+                socketStatus = false;
+                pthread_mutex_unlock(&lock);
+            }
             printf("%s\n", buffer);
             pthread_mutex_lock(&lock);
             List_remove(recieverList);
