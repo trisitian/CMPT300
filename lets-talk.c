@@ -207,10 +207,10 @@ int main(int argc, char* argv[]){
     pthread_create(&screenOut, NULL, (void *)screenOutThread, NULL);
     
     pthread_join(keyboardIn, NULL);
-    pthread_join(UDPOut, NULL);
-    pthread_join(UDPIn, NULL);
-    pthread_join(screenOut, NULL);
-    pthread_mutex_destroy(&lock);
-
-    return 0;
+    exit(0);
+    // pthread_join(UDPOut, NULL);
+    // pthread_join(UDPIn, NULL);
+    // pthread_join(screenOut, NULL);
+    // pthread_mutex_destroy(&lock);
+    // return 0;
 }
