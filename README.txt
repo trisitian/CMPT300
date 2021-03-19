@@ -12,3 +12,6 @@ https://stackoverflow.com/questions/8223742/how-to-pass-multiple-parameters-to-a
 converting IP to int 
 http://www.aboutmyip.com/AboutMyXApp/IP2Integer.jsp
 
+MUTEXES
+https://www.thegeekstuff.com/2012/05/c-mutex-examples/
+

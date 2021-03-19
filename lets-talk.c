@@ -9,6 +9,7 @@
 #include <arpa/inet.h>
 #include "./list.h"
 List *senderList, *recieverList;
+pthread_mutex_t lock;
 // struct to carry variables into threads
 struct threadArg{
     char *ip;
@@ -67,10 +68,9 @@ void *awaitInput(void *ptr){
     removeNewline(input);
     while(strcmp(input, "!exit") !=0){
         encrypt(input);
-        //LOCK WILL NEED TO GO HERE
+        pthread_mutex_lock(&lock);
         List_add(senderList, input);
-        printf("There are %d arguments in the list\n", List_count(senderList));
-        //LOCK WILL NEED TO UNLOCK HERE
+        pthread_mutex_unlock(&lock);
         fgets(input, sizeof(input), stdin);
         removeNewline(input);
     }
@@ -90,7 +90,7 @@ void *receivingThread(void *threadArguments){
     struct sockaddr_in receiver, source;
     bzero(&receiver, sizeof(receiver));
     receiver.sin_family = AF_INET;
-    receiver.sin_addr.s_addr = inet_addr("127.0.0.1"); // takes address in network byte order
+    receiver.sin_addr.s_addr = htonl(INADDR_ANY); // takes address in network byte order
     receiver.sin_port = htons((*info).portIN); // htons(port);
 
     // bind socket to socket address
@@ -109,9 +109,9 @@ void *receivingThread(void *threadArguments){
             perror("Failed to receive message");
             exit(EXIT_FAILURE);
         }
-        //add lock here
+        pthread_mutex_lock(&lock);
         List_add(recieverList, buffer);
-        // add unlock here
+        pthread_mutex_unlock(&lock);
     }
     close(sockfd);
 
@@ -146,7 +146,9 @@ void *sendingThread(void *threadArguments){
             buffer = List_curr(senderList);
             //decrypt(buffer);
             bufferlen = sendto(sockfd, buffer, 27, 0, (const struct sockaddr *) &receiver, sourceLen);
+            pthread_mutex_lock(&lock);
             List_remove(senderList);
+            pthread_mutex_unlock(&lock);
             //printf("There are currently %d messages in the list\n", List_count(senderList));
             if (bufferlen < 0){
                 perror("Failed to send message");
@@ -166,7 +168,9 @@ void *screenOutThread(struct threadArg *threadArgs){
             buffer = List_first(recieverList);
             decrypt(buffer);
             printf("%s\n", buffer);
+            pthread_mutex_lock(&lock);
             List_remove(recieverList);
+            pthread_mutex_unlock(&lock);
         }
     }
     return 0;
@@ -206,6 +210,7 @@ int main(int argc, char* argv[]){
     pthread_join(UDPOut, NULL);
     pthread_join(UDPIn, NULL);
     pthread_join(screenOut, NULL);
+    pthread_mutex_destroy(&lock);
 
     return 0;
 }
