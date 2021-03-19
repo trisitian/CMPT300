@@ -13,6 +13,7 @@ List *senderList, *receiverList;
 pthread_mutex_t lock;   // soon deprecated
 sem_t mutexIN, mutexOUT;
 bool socketStatus = false;
+bool exitBool = false;
 
 // struct to carry variables into threads
 struct threadArg{
@@ -58,32 +59,35 @@ void removeNewline(char input[4000]) {
 void *awaitInput(void *ptr){
     sem_wait(&mutexOUT);
     char input[4000];
-
     do{
         fgets(input, sizeof(input), stdin);
         removeNewline(input);
-        if(strcmp(input, "!status") == 0){
-            pthread_mutex_lock(&lock);
+        // if(strcmp(input, "!status") == 0){
+        //     pthread_mutex_lock(&lock);
+        //     socketStatus = true;
+        //     pthread_mutex_unlock(&lock);
+        // }
+        if (strcmp(input, "!status") == 0){
             socketStatus = true;
-            pthread_mutex_unlock(&lock);
+        }
+        else if (strcmp(input, "!exit") == 0){
+            exitBool = true;
         }
         encrypt(input);
         pthread_mutex_lock(&lock);
         List_add(senderList, input);
         pthread_mutex_unlock(&lock);
-        fgets(input, sizeof(input), stdin);
-        removeNewline(input);
-        if(socketStatus){
-            printf("checking status\n");
-            if(socketStatus){
-                printf("OFFLINE\n");
-                pthread_mutex_lock(&lock);
-                socketStatus = false;
-                pthread_mutex_unlock(&lock);
-            }else{
-                printf("ONLINE\n");
-            }
-        }
+        // if(socketStatus){
+        //     printf("checking status\n");
+        //     if(socketStatus){
+        //         printf("OFFLINE\n");
+        //         pthread_mutex_lock(&lock);
+        //         socketStatus = false;
+        //         pthread_mutex_unlock(&lock);
+        //     }else{
+        //         printf("ONLINE\n");
+        //     }
+        // }
         // sem_post(&mutexOUT);
     }while(strcmp(input, "!exit") != 0);
     return 0;
@@ -172,6 +176,9 @@ void *sendingThread(void *threadArguments){
                 perror("Failed to send message");
                 exit(EXIT_FAILURE);
             }
+            if (exitBool){
+                exit(0);
+            }
         }
         // sem_wait(&mutexOUT);
     }
@@ -183,23 +190,41 @@ void *sendingThread(void *threadArguments){
 void *screenOutThread(struct threadArg *threadArgs){
     // sem_wait(&mutexIN);
     char *buffer;
+    char onlineYes[7] = "Online";
+    char onlineNo[8] = "Offline";
+    encrypt(onlineYes);
     while(1){
         if(List_count(receiverList) != 0){
             buffer = List_first(receiverList);
-            decrypt(buffer);
-            if (strcmp(buffer, "!exit") == 0){
-                break;
+            if (strcmp(buffer, "Offline") != 0){
+                decrypt(buffer);
             }
-            if(strcmp(buffer, "!status") == 0){
+            if (strcmp(buffer, "!exit") == 0){
+                exit(0);
+            }
+            else if(strcmp(buffer, "!status") == 0){
+                // if an incoming message is for checking status
+                // shoot back a message saying Online
+                // skip printing the message
+                List_add(senderList, onlineYes);
+                List_remove(receiverList);
+            }
+            else{
+                printf("%s\n", buffer);
+                fflush(stdout);
                 pthread_mutex_lock(&lock);
-                socketStatus = false;
+                List_remove(receiverList);
                 pthread_mutex_unlock(&lock);
             }
-            printf("%s\n", buffer);
-            fflush(stdout);
-            pthread_mutex_lock(&lock);
-            List_remove(receiverList);
-            pthread_mutex_unlock(&lock);
+        }
+
+        // if !status is sent
+        if (socketStatus){
+            sleep(1);
+            if(List_count(receiverList) == 0){
+                List_add(receiverList, onlineNo);
+            }
+            socketStatus = false;
         }
         // sem_wait(&mutexIN);
     }
