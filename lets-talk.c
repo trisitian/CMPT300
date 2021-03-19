@@ -12,23 +12,14 @@
 List *senderList, *receiverList;
 pthread_mutex_t lock;   // soon deprecated
 sem_t mutexIN, mutexOUT;
+bool socketStatus = false;
+
 // struct to carry variables into threads
 struct threadArg{
     char *ip;
     long portIN;
     long portOUT;
 };
-
-// // Will cause seg fault if user enters incorrect IP
-// long IPtoInt(char* normalForm){
-//     long first, second, third, fourth;
-//     const char delimeter[2] = ".";
-//     first = pow(256,3)*atoi(strtok(normalForm, delimeter));
-//     second = pow(256,2)*atoi(strtok(NULL, delimeter));
-//     third = 256*atoi(strtok(NULL, delimeter));
-//     fourth = atoi(strtok(NULL, delimeter));
-//     return first + second + third+ fourth;
-// }
 
 /**
  * Basic ceaser cypher 
@@ -67,13 +58,32 @@ void removeNewline(char input[4000]) {
 void *awaitInput(void *ptr){
     sem_wait(&mutexOUT);
     char input[4000];
+
     do{
         fgets(input, sizeof(input), stdin);
         removeNewline(input);
+        if(strcmp(input, "!status") == 0){
+            pthread_mutex_lock(&lock);
+            socketStatus = true;
+            pthread_mutex_unlock(&lock);
+        }
         encrypt(input);
         pthread_mutex_lock(&lock);
         List_add(senderList, input);
         pthread_mutex_unlock(&lock);
+        fgets(input, sizeof(input), stdin);
+        removeNewline(input);
+        if(socketStatus){
+            printf("checking status\n");
+            if(socketStatus){
+                printf("OFFLINE\n");
+                pthread_mutex_lock(&lock);
+                socketStatus = false;
+                pthread_mutex_unlock(&lock);
+            }else{
+                printf("ONLINE\n");
+            }
+        }
         // sem_post(&mutexOUT);
     }while(strcmp(input, "!exit") != 0);
     return 0;
@@ -109,7 +119,8 @@ void *receivingThread(void *threadArguments){
     // should be able to do without the while loop, as recvfrom seems to hang the thread until message is received
     while (1){
         // recvfrom will wait for a message, so no need for a lock
-        bufferlen = recvfrom(sockfd, buffer, 4000, 0, (struct sockaddr *) &source, &sourceLen); 
+        bufferlen = recvfrom(sockfd, buffer, 4000, 0, (struct sockaddr *) &source, &sourceLen);
+        fflush(stdout);
         if (bufferlen < 0){
             perror("Failed to receive message");
             exit(EXIT_FAILURE);
@@ -150,14 +161,13 @@ void *sendingThread(void *threadArguments){
     while(1){
         // send message
         while(List_count(senderList) != 0){
-            //printf("There are currently %d messages in the list\n", List_count(senderList));
             buffer = List_curr(senderList);
             //decrypt(buffer);
+            
             bufferlen = sendto(sockfd, buffer, 27, 0, (const struct sockaddr *) &receiver, sourceLen);
             pthread_mutex_lock(&lock);
             List_remove(senderList);
             pthread_mutex_unlock(&lock);
-            //printf("There are currently %d messages in the list\n", List_count(senderList));
             if (bufferlen < 0){
                 perror("Failed to send message");
                 exit(EXIT_FAILURE);
@@ -179,6 +189,11 @@ void *screenOutThread(struct threadArg *threadArgs){
             decrypt(buffer);
             if (strcmp(buffer, "!exit") == 0){
                 break;
+            }
+            if(strcmp(buffer, "!status") == 0){
+                pthread_mutex_lock(&lock);
+                socketStatus = false;
+                pthread_mutex_unlock(&lock);
             }
             printf("%s\n", buffer);
             fflush(stdout);
