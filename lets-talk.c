@@ -90,7 +90,7 @@ void *receivingThread(void *threadArguments){
     struct sockaddr_in receiver, source;
     bzero(&receiver, sizeof(receiver));
     receiver.sin_family = AF_INET;
-    receiver.sin_addr.s_addr = inet_addr(INADDR_ANY); // takes address in network byte order
+    receiver.sin_addr.s_addr = inet_addr("127.0.0.1"); // takes address in network byte order
     receiver.sin_port = htons((*info).portIN); // htons(port);
 
     // bind socket to socket address
