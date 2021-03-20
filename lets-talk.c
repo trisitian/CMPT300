@@ -11,7 +11,7 @@
 #include "./list.h"
 List *senderList, *receiverList;
 pthread_mutex_t lock;   // soon deprecated
-sem_t mutexIN, mutexOUT;
+sem_t mutexIN, mutexOUT, mutexKeyboard;
 bool socketStatus = false;
 bool exitBool = false;
 
@@ -70,6 +70,11 @@ void removeNewline(char input[4000]) {
 void *awaitInput(void *ptr){
     char input[4000];   // max input limit 4000 characters
     char secondary[4000];
+    // char *input;   // max input limit 4000 characters
+    // char *secondary;
+    size_t size = 4000;
+    // input = (char* ) malloc(size);
+    // secondary = (char*) malloc(size); 
     printf("Welcome to Lets-Talk! Please type your messages now.\n");
     do{
         //TODO: make compatible with pasting multiple lines into terminal
@@ -92,7 +97,12 @@ void *awaitInput(void *ptr){
         //     fgets(secondary, sizeof(secondary), stdin);
         //     strcat(input, secondary); 
         // }
-        fgets(input, sizeof(input), stdin);
+        // fgets(input, sizeof(input), stdin);
+        getline(&input, &size, stdin);
+        // while(getline(&secondary, &size, stdin) != -1){
+        //     strcat(input, secondary); 
+        //     printf("%s", input);
+        // }
 
         removeNewline(input);
 
@@ -116,7 +126,8 @@ void *awaitInput(void *ptr){
         
         // activate sendingThread
         sem_post(&mutexOUT);
-
+        sem_wait(&mutexKeyboard);
+        
     }while(strcmp(input, "!exit") != 0);    // if !exit entered, terminate thread
     return 0;
 }
@@ -200,8 +211,8 @@ void *sendingThread(void *threadArguments){
     
     while(1){
         while(List_count(senderList) != 0){
-            buffer = List_curr(senderList); // grab latest item in senderList            
-            bufferlen = sendto(sockfd, buffer, 27, 0, (const struct sockaddr *) &receiver, sourceLen);
+            buffer = List_curr(senderList); // grab latest item in senderList
+            bufferlen = sendto(sockfd, buffer, 4000, 0, (const struct sockaddr *) &receiver, sourceLen);
             // remove the sent item from list
             pthread_mutex_lock(&lock);
             List_remove(senderList);
@@ -218,6 +229,7 @@ void *sendingThread(void *threadArguments){
 
         // waits for input from awaitInput,
         // or if screenOutThread sees a !status and wants to send a reply.
+        sem_post(&mutexKeyboard);
         sem_wait(&mutexOUT);
     }
 
@@ -291,6 +303,7 @@ void *screenOutThread(struct threadArg *threadArgs){
 int main(int argc, char* argv[]){
     sem_init(&mutexIN, 0, 0); // initialize semaphore for receiveThread & screenOut
     sem_init(&mutexOUT, 0, 0); // initialize semaphore for awaitInput & sendingThread
+    sem_init(&mutexKeyboard, 0, 0); // initialize semaphore for awaitInput & sendingThread
     
     // check if correct num of args are passed. If not, exit.
     if(argc != 4){
