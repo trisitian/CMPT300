@@ -55,6 +55,7 @@ void removeNewline(char input[4000]) {
         }
     }
 }
+
 //Thread for getting keyboard input
 void *awaitInput(void *ptr){
     sem_wait(&mutexOUT);
@@ -62,11 +63,7 @@ void *awaitInput(void *ptr){
     do{
         fgets(input, sizeof(input), stdin);
         removeNewline(input);
-        // if(strcmp(input, "!status") == 0){
-        //     pthread_mutex_lock(&lock);
-        //     socketStatus = true;
-        //     pthread_mutex_unlock(&lock);
-        // }
+
         if (strcmp(input, "!status") == 0){
             socketStatus = true;
         }
@@ -77,17 +74,7 @@ void *awaitInput(void *ptr){
         pthread_mutex_lock(&lock);
         List_add(senderList, input);
         pthread_mutex_unlock(&lock);
-        // if(socketStatus){
-        //     printf("checking status\n");
-        //     if(socketStatus){
-        //         printf("OFFLINE\n");
-        //         pthread_mutex_lock(&lock);
-        //         socketStatus = false;
-        //         pthread_mutex_unlock(&lock);
-        //     }else{
-        //         printf("ONLINE\n");
-        //     }
-        // }
+
         // sem_post(&mutexOUT);
     }while(strcmp(input, "!exit") != 0);
     return 0;
@@ -245,14 +232,14 @@ int main(int argc, char* argv[]){
     senderList = List_create();
     receiverList = List_create();
 
-    pthread_t keyboardIn, UDPOut, UDPIn, screenOut; // threads to handle keyboard, UDP, and output
+    // threads to handle keyboard, UDP, and output
+    pthread_t keyboardIn, UDPOut, UDPIn, screenOut; 
 
     // for passing variables into threads
     struct threadArg threadArguments;                   
     threadArguments.portIN = atoi(argv[1]);         // assign incoming port (my port)
     threadArguments.portOUT = atoi(argv[3]);        // assign outgoing port (remote port)
-    
-    if(strcmp(argv[2], "localhost") == 0){
+    if(strcmp(argv[2], "localhost") == 0){          // assign IP
         threadArguments.ip = "127.0.0.1"; // localhost 
     }else{
         threadArguments.ip = argv[2];
