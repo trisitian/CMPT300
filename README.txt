@@ -1,6 +1,14 @@
 README for CMPT300 Assignment 3
 
 This assignment is a collaboration between Jinhan Liu (301430717) and Tristian Labanowich (301422226).
+*********************************************************************************************************
+*PLEASE NOTE WE WILL BE USING 2 LATE DAYS EACH FOR THIS ASSIGNMENT NEITHER OF US HAVE USED LATE DAYS YET*
+*********************************************************************************************************
+
+collectively we spent about 30-35 hours on the project.
+(Tristian): Alot of this time was figuring out the ropes for threads, seeing how to pass arguments properly. having them start the way we wanted to.
+I'll be honest in class I didn't fully see the problem and why mutes were needed for an assignment like this but after working through the program I 
+definetly got a good understanding of why they were necissary. 
 
 
 
