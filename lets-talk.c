@@ -69,10 +69,31 @@ void removeNewline(char input[4000]) {
 //Thread for getting keyboard input
 void *awaitInput(void *ptr){
     char input[4000];   // max input limit 4000 characters
+    char secondary[4000];
     printf("Welcome to Lets-Talk! Please type your messages now.\n");
     do{
-        // TODO: make compatible with pasting multiple lines into terminal
+        //TODO: make compatible with pasting multiple lines into terminal
+        //ALL 3 OF THEESE SOLUTIONS SHOULD WORK, FOR SOME REASON THE LOOP NEVER EXITS, DOES IT HAVE SOMETHING TO DO WITH LOCKS?
+        // while((fgets(secondary, sizeof(secondary), stdin) != NULL)){
+        //     fgets(secondary, sizeof(secondary), stdin);
+        //     strcat(input, secondary); 
+        // }
+        // while(!feof(stdin) || (fgets(secondary, sizeof(secondary), stdin) != NULL)){
+        //     if(strcmp(fgets(secondary, sizeof(secondary), stdin),"\n") == 0){
+        //         break;
+        //     }
+        //     fgets(secondary, sizeof(secondary), stdin);
+        //     strcat(input, secondary);
+        // }
+        // for(int i = 0; i < 100; i++){
+        //     if(fgets(secondary, sizeof(secondary), stdin) == NULL){
+        //         break;
+        //     }
+        //     fgets(secondary, sizeof(secondary), stdin);
+        //     strcat(input, secondary); 
+        // }
         fgets(input, sizeof(input), stdin);
+
         removeNewline(input);
 
         // if asking for status, change socketStatus to true for screenoutThread
