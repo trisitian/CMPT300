@@ -11,7 +11,7 @@
 #include "./list.h"
 List *senderList, *receiverList;
 pthread_mutex_t lock;   // soon deprecated
-sem_t mutexIN, mutexOUT;
+sem_t mutexIN, mutexOUT, mutexKeyboard;
 bool socketStatus = false;
 bool exitBool = false;
 
@@ -71,19 +71,16 @@ void *awaitInput(void *ptr){
     char *input;   // max input limit 4000 characters
     char *secondary;
     size_t size = 4000;
-    input = (char* ) malloc(size);
-    secondary = (char*) malloc(size); 
+    // input = (char* ) malloc(size);
+    // secondary = (char*) malloc(size); 
     printf("Welcome to Lets-Talk! Please type your messages now.\n");
     do{
         //TODO: make compatible with pasting multiple lines into terminal
         //ALL 3 OF THEESE SOLUTIONS SHOULD WORK, FOR SOME REASON THE LOOP NEVER EXITS, DOES IT HAVE SOMETHING TO DO WITH LOCKS?
-        //while(1){
-            //fgets(input, sizeof(input), stdin);
-            // if(strcmp(secondary, "\n")){
-            //     break;
-            // }
-            //strcat(input, secondary); 
-        //}
+        // while((fgets(secondary, sizeof(secondary), stdin) != NULL)){
+        //     fgets(secondary, sizeof(secondary), stdin);
+        //     strcat(input, secondary); 
+        // }
         // while(!feof(stdin) || (fgets(secondary, sizeof(secondary), stdin) != NULL)){
         //     if(strcmp(fgets(secondary, sizeof(secondary), stdin),"\n") == 0){
         //         break;
@@ -98,20 +95,11 @@ void *awaitInput(void *ptr){
         //     fgets(secondary, sizeof(secondary), stdin);
         //     strcat(input, secondary); 
         // }
-        //fgets(input, sizeof(input), stdin);
-        // int prev, curr;
-        // while(1){
-        //     getline(&secondary, &size, stdin);
-        //     curr = sizeof(secondary);
-        //     if(curr == prev){
-        //         break;
-        //     } else{
-        //         printf("SIZE IS %ld\n", sizeof(secondary));
-        //     }
-        //     prev = sizeof(secondary);
-        //     strcat(input, secondary);
+        getline(&input, &size, stdin);
+        // while(getline(&secondary, &size, stdin) != -1){
+        //     strcat(input, secondary); 
+        //     printf("%s", input);
         // }
-        getline(&input, &size,stdin);
 
         removeNewline(input);
 
@@ -135,6 +123,8 @@ void *awaitInput(void *ptr){
         
         // activate sendingThread
         sem_post(&mutexOUT);
+        sem_wait(&mutexKeyboard);
+        
 
     }while(strcmp(input, "!exit") != 0);    // if !exit entered, terminate thread
     return 0;
@@ -219,7 +209,7 @@ void *sendingThread(void *threadArguments){
     
     while(1){
         while(List_count(senderList) != 0){
-            buffer = List_curr(senderList); // grab latest item in senderList         
+            buffer = List_curr(senderList); // grab latest item in senderList            
             bufferlen = sendto(sockfd, buffer, 4000, 0, (const struct sockaddr *) &receiver, sourceLen);
             // remove the sent item from list
             pthread_mutex_lock(&lock);
@@ -237,6 +227,7 @@ void *sendingThread(void *threadArguments){
 
         // waits for input from awaitInput,
         // or if screenOutThread sees a !status and wants to send a reply.
+        sem_post(&mutexKeyboard);
         sem_wait(&mutexOUT);
     }
 
@@ -310,6 +301,7 @@ void *screenOutThread(struct threadArg *threadArgs){
 int main(int argc, char* argv[]){
     sem_init(&mutexIN, 0, 0); // initialize semaphore for receiveThread & screenOut
     sem_init(&mutexOUT, 0, 0); // initialize semaphore for awaitInput & sendingThread
+    sem_init(&mutexKeyboard, 0, 0); // initialize semaphore for awaitInput & sendingThread
     
     // check if correct num of args are passed. If not, exit.
     if(argc != 4){
