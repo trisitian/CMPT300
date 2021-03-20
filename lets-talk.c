@@ -68,16 +68,22 @@ void removeNewline(char input[4000]) {
 
 //Thread for getting keyboard input
 void *awaitInput(void *ptr){
-    char input[4000];   // max input limit 4000 characters
-    char secondary[4000];
+    char *input;   // max input limit 4000 characters
+    char *secondary;
+    size_t size = 4000;
+    input = (char* ) malloc(size);
+    secondary = (char*) malloc(size); 
     printf("Welcome to Lets-Talk! Please type your messages now.\n");
     do{
         //TODO: make compatible with pasting multiple lines into terminal
         //ALL 3 OF THEESE SOLUTIONS SHOULD WORK, FOR SOME REASON THE LOOP NEVER EXITS, DOES IT HAVE SOMETHING TO DO WITH LOCKS?
-        // while((fgets(secondary, sizeof(secondary), stdin) != NULL)){
-        //     fgets(secondary, sizeof(secondary), stdin);
-        //     strcat(input, secondary); 
-        // }
+        //while(1){
+            //fgets(input, sizeof(input), stdin);
+            // if(strcmp(secondary, "\n")){
+            //     break;
+            // }
+            //strcat(input, secondary); 
+        //}
         // while(!feof(stdin) || (fgets(secondary, sizeof(secondary), stdin) != NULL)){
         //     if(strcmp(fgets(secondary, sizeof(secondary), stdin),"\n") == 0){
         //         break;
@@ -92,7 +98,20 @@ void *awaitInput(void *ptr){
         //     fgets(secondary, sizeof(secondary), stdin);
         //     strcat(input, secondary); 
         // }
-        fgets(input, sizeof(input), stdin);
+        //fgets(input, sizeof(input), stdin);
+        // int prev, curr;
+        // while(1){
+        //     getline(&secondary, &size, stdin);
+        //     curr = sizeof(secondary);
+        //     if(curr == prev){
+        //         break;
+        //     } else{
+        //         printf("SIZE IS %ld\n", sizeof(secondary));
+        //     }
+        //     prev = sizeof(secondary);
+        //     strcat(input, secondary);
+        // }
+        getline(&input, &size,stdin);
 
         removeNewline(input);
 
@@ -200,8 +219,8 @@ void *sendingThread(void *threadArguments){
     
     while(1){
         while(List_count(senderList) != 0){
-            buffer = List_curr(senderList); // grab latest item in senderList            
-            bufferlen = sendto(sockfd, buffer, 27, 0, (const struct sockaddr *) &receiver, sourceLen);
+            buffer = List_curr(senderList); // grab latest item in senderList         
+            bufferlen = sendto(sockfd, buffer, 4000, 0, (const struct sockaddr *) &receiver, sourceLen);
             // remove the sent item from list
             pthread_mutex_lock(&lock);
             List_remove(senderList);
