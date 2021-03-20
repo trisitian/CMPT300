@@ -11,7 +11,7 @@
 #include "./list.h"
 List *senderList, *receiverList;
 pthread_mutex_t lock;   // soon deprecated
-sem_t mutexIN, mutexOUT;
+sem_t mutexIN, mutexOUT, mutexKeyboard;
 bool socketStatus = false;
 bool exitBool = false;
 
@@ -135,6 +135,7 @@ void *awaitInput(void *ptr){
         
         // activate sendingThread
         sem_post(&mutexOUT);
+        sem_wait(&mutexKeyboard);
 
     }while(strcmp(input, "!exit") != 0);    // if !exit entered, terminate thread
     return 0;
@@ -237,6 +238,7 @@ void *sendingThread(void *threadArguments){
 
         // waits for input from awaitInput,
         // or if screenOutThread sees a !status and wants to send a reply.
+        sem_post(&mutexKeyboard);
         sem_wait(&mutexOUT);
     }
 
@@ -310,6 +312,7 @@ void *screenOutThread(struct threadArg *threadArgs){
 int main(int argc, char* argv[]){
     sem_init(&mutexIN, 0, 0); // initialize semaphore for receiveThread & screenOut
     sem_init(&mutexOUT, 0, 0); // initialize semaphore for awaitInput & sendingThread
+    sem_init(&mutexKeyboard, 0, 0); // initialize semaphore for awaitInput & sendingThread
     
     // check if correct num of args are passed. If not, exit.
     if(argc != 4){
