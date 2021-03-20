@@ -70,14 +70,16 @@ void removeNewline(char input[4000]) {
 
 //Thread for getting keyboard input
 void *awaitInput(void *ptr){
-    sem_wait(&mutexOUT);
     char input[4000];
     do{
         fgets(input, sizeof(input), stdin);
         removeNewline(input);
 
         if (strcmp(input, "!status") == 0){
+            pthread_mutex_lock(&lock);
             socketStatus = true;
+            pthread_mutex_unlock(&lock);
+            sem_post(&mutexIN);
         }
         else if (strcmp(input, "!exit") == 0){
             exitBool = true;
@@ -86,8 +88,8 @@ void *awaitInput(void *ptr){
         pthread_mutex_lock(&lock);
         List_add(senderList, input);
         pthread_mutex_unlock(&lock);
-
-        // sem_post(&mutexOUT);
+        // printf("await is live\n");
+        sem_post(&mutexOUT);
     }while(strcmp(input, "!exit") != 0);
     return 0;
 }
@@ -118,8 +120,6 @@ void *receivingThread(void *threadArguments){
     unsigned int sourceLen = sizeof(source);
     char buffer[4000];
     int bufferlen;
-    // sem_post(&mutexIN);
-    // should be able to do without the while loop, as recvfrom seems to hang the thread until message is received
     while (1){
         // recvfrom will wait for a message, so no need for a lock
         bufferlen = recvfrom(sockfd, buffer, 4000, 0, (struct sockaddr *) &source, &sourceLen);
@@ -131,8 +131,7 @@ void *receivingThread(void *threadArguments){
         pthread_mutex_lock(&lock);
         List_add(receiverList, buffer);
         pthread_mutex_unlock(&lock);
-        // sem_post(&mutexIN);
-        // sem_wait(&mutexIN);
+        sem_post(&mutexIN);
     }
     close(sockfd);
 
@@ -163,13 +162,10 @@ void *sendingThread(void *threadArguments){
     receiver.sin_port = htons((*info).portOUT); // htons(port); 
     char *buffer;
     int bufferlen;
-    sem_post(&mutexOUT);
     while(1){
         // send message
         while(List_count(senderList) != 0){
-            buffer = List_curr(senderList);
-            //decrypt(buffer);
-            
+            buffer = List_curr(senderList);            
             bufferlen = sendto(sockfd, buffer, 27, 0, (const struct sockaddr *) &receiver, sourceLen);
             pthread_mutex_lock(&lock);
             List_remove(senderList);
@@ -182,7 +178,8 @@ void *sendingThread(void *threadArguments){
                 exit(0);
             }
         }
-        // sem_wait(&mutexOUT);
+        sem_wait(&mutexOUT);
+        // printf("sendthread is live\n");
     }
     close(sockfd);
     return 0;
@@ -190,45 +187,47 @@ void *sendingThread(void *threadArguments){
 
 // thread for printing into terminal
 void *screenOutThread(struct threadArg *threadArgs){
-    // sem_wait(&mutexIN);
     char *buffer;
     char onlineYes[7] = "Online";
     char onlineNo[8] = "Offline";
     encrypt(onlineYes);
     while(1){
-        if(List_count(receiverList) != 0){
-            buffer = List_first(receiverList);
-            if (strcmp(buffer, "Offline") != 0){
-                decrypt(buffer);
-            }
-            if (strcmp(buffer, "!exit") == 0){
-                exit(0);
-            }
-            else if(strcmp(buffer, "!status") == 0){
-                // if an incoming message is for checking status
-                // shoot back a message saying Online
-                // skip printing the message
-                List_add(senderList, onlineYes);
-                List_remove(receiverList);
-            }
-            else{
-                printf("%s\n", buffer);
-                fflush(stdout);
-                pthread_mutex_lock(&lock);
-                List_remove(receiverList);
-                pthread_mutex_unlock(&lock);
-            }
-        }
-
+        sem_wait(&mutexIN);
         // if !status is sent
         if (socketStatus){
             sleep(1);
             if(List_count(receiverList) == 0){
                 List_add(receiverList, onlineNo);
             }
+            else{
+                sem_wait(&mutexIN);
+            }
+            pthread_mutex_lock(&lock);
             socketStatus = false;
+            pthread_mutex_unlock(&lock);
         }
-        // sem_wait(&mutexIN);
+
+        buffer = List_first(receiverList);
+        if (strcmp(buffer, "Offline") != 0){
+            decrypt(buffer);
+        }
+        if (strcmp(buffer, "!exit") == 0){
+            exit(0);
+        }
+        else if(strcmp(buffer, "!status") == 0){
+            // if an incoming message is for checking status
+            // shoot back a message saying Online
+            // skip printing the message
+            List_add(senderList, onlineYes);
+            sem_post(&mutexOUT);
+            List_remove(receiverList);
+            continue;
+        }
+        printf("%s\n", buffer);
+        fflush(stdout);
+        pthread_mutex_lock(&lock);
+        List_remove(receiverList);
+        pthread_mutex_unlock(&lock);
     }
     return 0;
 }
@@ -267,13 +266,9 @@ int main(int argc, char* argv[]){
     pthread_create(&screenOut, NULL, (void *)screenOutThread, NULL);
     
     pthread_join(keyboardIn, NULL);
-    exit(0);
     pthread_join(UDPOut, NULL);
-    exit(0);
     pthread_join(UDPIn, NULL);
-    exit(0);
     pthread_join(screenOut, NULL);
-    exit(0);
-    // pthread_mutex_destroy(&lock);
-    // return 0;
+    pthread_mutex_destroy(&lock);
+    return 0;
 }
