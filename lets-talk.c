@@ -68,13 +68,13 @@ void removeNewline(char input[4000]) {
 
 //Thread for getting keyboard input
 void *awaitInput(void *ptr){
-    char input[4000];   // max input limit 4000 characters
-    char secondary[4000];
-    // char *input;   // max input limit 4000 characters
-    // char *secondary;
+    // char input[4000];   // max input limit 4000 characters
+    // char secondary[4000];
+    char *input;   // max input limit 4000 characters
+    char *secondary;
     size_t size = 4000;
-    // input = (char* ) malloc(size);
-    // secondary = (char*) malloc(size); 
+    input = (char* ) malloc(size);
+    secondary = (char*) malloc(size); 
     printf("Welcome to Lets-Talk! Please type your messages now.\n");
     do{
         //TODO: make compatible with pasting multiple lines into terminal
