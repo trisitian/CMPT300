@@ -33,6 +33,14 @@ void encrypt(char message[4000]){
     }
 }
 
+bool isValidIp(char* ip){
+    struct sockaddr_in sa;
+    int result = inet_pton(AF_INET, ip, &(sa.sin_addr));
+    return result != 0;
+}
+
+
+
 /**
  * Basic ceaser cypher 
  * does changes in place @returns nothing
@@ -154,11 +162,14 @@ void *sendingThread(void *threadArguments){
     // assign values to socket address
     struct sockaddr_in receiver;
     int sourceLen = sizeof(receiver);
-
     receiver.sin_family = AF_INET;
-    receiver.sin_addr.s_addr = inet_addr((*info).ip); // htonl(ip); // uncooment functions to use actual IPs
-    receiver.sin_port = htons((*info).portOUT); // htons(port);    
-
+    if(isValidIp((*info).ip)){
+        receiver.sin_addr.s_addr = inet_addr((*info).ip);
+    }else{
+        printf("Invalid IP entered, setting socket to localhost\n");
+        receiver.sin_addr.s_addr = inet_addr("127.0.0.1");
+    }
+    receiver.sin_port = htons((*info).portOUT); // htons(port); 
     char *buffer;
     int bufferlen;
     sem_post(&mutexOUT);
