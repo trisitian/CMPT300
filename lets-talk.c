@@ -69,10 +69,8 @@ void removeNewline(char input[4000]) {
 //Thread for getting keyboard input
 void *awaitInput(void *ptr){
     char *input;   // max input limit 4000 characters
-    char *secondary;
     size_t size = 4000;
     input = (char* ) malloc(size);
-    secondary = (char*) malloc(size); 
     printf("Welcome to Lets-Talk! Please type your messages now.\n");
     sem_wait(&mutexKeyboard);
     do{
@@ -101,7 +99,7 @@ void *awaitInput(void *ptr){
         sem_post(&mutexOUT);
         sem_wait(&mutexKeyboard);
 
-    }while(strcmp(input, "!exit") != 0);    // if !exit entered, terminate thread
+    }while(!exitBool);    // if !exit entered, terminate thread
     return 0;
 }
 
@@ -132,7 +130,8 @@ void *receivingThread(void *threadArguments){
 
     unsigned int sourceLen = sizeof(source);
     char buffer[4000];
-    char *temp = "!exit";
+    char temp[6] = "!exit";
+    encrypt(temp);
     int bufferlen;
     
     while (1){
@@ -149,14 +148,12 @@ void *receivingThread(void *threadArguments){
         List_add(receiverList, buffer);
         pthread_mutex_unlock(&lock);
         sem_post(&mutexIN);
-        decrypt(temp);
         if(strcmp(temp, buffer) == 0){ // !exit is called
             close(sockfd);
             exit(0);
         }
     }
 
-    close(sockfd);
     return 0;
 }
 
