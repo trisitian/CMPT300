@@ -168,6 +168,7 @@ void *receivingThread(void *threadArguments){
 
     unsigned int sourceLen = sizeof(source);
     char buffer[4000];
+    char *temp = "!exit";
     int bufferlen;
     
     while (1){
@@ -184,6 +185,11 @@ void *receivingThread(void *threadArguments){
         List_add(receiverList, buffer);
         pthread_mutex_unlock(&lock);
         sem_post(&mutexIN);
+        decrypt(temp);
+        if(strcmp(temp, buffer) == 0){ // !exit is called
+            close(sockfd);
+            exit(0);
+        }
     }
 
     close(sockfd);
@@ -232,6 +238,7 @@ void *sendingThread(void *threadArguments){
                 exit(EXIT_FAILURE);
             }
             if (exitBool){  // terminate thread if exit was entered in awaitInput
+                close(sockfd);
                 exit(0);
             }
         }
