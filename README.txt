@@ -29,3 +29,6 @@ http://www.aboutmyip.com/AboutMyXApp/IP2Integer.jsp
 MUTEXES
 https://www.thegeekstuff.com/2012/05/c-mutex-examples/
 
+IP VALIDITY
+https://stackoverflow.com/questions/791982/determine-if-a-string-is-a-valid-ipv4-address-in-c
+

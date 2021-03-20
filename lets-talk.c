@@ -33,6 +33,10 @@ void encrypt(char message[4000]){
     }
 }
 
+/**
+ * utility function for setting up socket with proper IP
+ * checks validity of ip adress
+ * */
 bool isValidIp(char* ip){
     struct sockaddr_in sa;
     int result = inet_pton(AF_INET, ip, &(sa.sin_addr));
