@@ -111,8 +111,9 @@ void *awaitInput(void *ptr){
         //     prev = sizeof(secondary);
         //     strcat(input, secondary);
         // }
-        getline(&input, &size,stdin);
-
+        while(scanf("%[^\n]",secondary)==1){
+            strcat(input, secondary);
+        }
         removeNewline(input);
 
         // if asking for status, change socketStatus to true for screenoutThread
