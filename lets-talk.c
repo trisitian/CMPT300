@@ -74,46 +74,9 @@ void *awaitInput(void *ptr){
     input = (char* ) malloc(size);
     secondary = (char*) malloc(size); 
     printf("Welcome to Lets-Talk! Please type your messages now.\n");
+    sem_wait(&mutexKeyboard);
     do{
-        //TODO: make compatible with pasting multiple lines into terminal
-        //ALL 3 OF THEESE SOLUTIONS SHOULD WORK, FOR SOME REASON THE LOOP NEVER EXITS, DOES IT HAVE SOMETHING TO DO WITH LOCKS?
-        //while(1){
-            //fgets(input, sizeof(input), stdin);
-            // if(strcmp(secondary, "\n")){
-            //     break;
-            // }
-            //strcat(input, secondary); 
-        //}
-        // while(!feof(stdin) || (fgets(secondary, sizeof(secondary), stdin) != NULL)){
-        //     if(strcmp(fgets(secondary, sizeof(secondary), stdin),"\n") == 0){
-        //         break;
-        //     }
-        //     fgets(secondary, sizeof(secondary), stdin);
-        //     strcat(input, secondary);
-        // }
-        // for(int i = 0; i < 100; i++){
-        //     if(fgets(secondary, sizeof(secondary), stdin) == NULL){
-        //         break;
-        //     }
-        //     fgets(secondary, sizeof(secondary), stdin);
-        //     strcat(input, secondary); 
-        // }
-        //fgets(input, sizeof(input), stdin);
-        // int prev, curr;
-        // while(1){
-        //     getline(&secondary, &size, stdin);
-        //     curr = sizeof(secondary);
-        //     if(curr == prev){
-        //         break;
-        //     } else{
-        //         printf("SIZE IS %ld\n", sizeof(secondary));
-        //     }
-        //     prev = sizeof(secondary);
-        //     strcat(input, secondary);
-        // }
-        while(scanf("%[^\n]",secondary)==1){
-            strcat(input, secondary);
-        }
+        getline(&input, &size, stdin);
         removeNewline(input);
 
         // if asking for status, change socketStatus to true for screenoutThread
