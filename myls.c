@@ -14,20 +14,27 @@
  * 
  * 
  * */
-struct flags{
+struct Flags{
     char flagList[5]; // pretty sure you can only have 3 flags max but have 5 just in case 
     int size; // current amount of flags, will be used when applying options
 };
 
+struct Files{
+    char *FileList[100]; // doubt they are going to call more than 100 files
+    int size; // current amount of files passed
+};
+
 
 int main(int argc, char**argv){
-    struct flags args;
+    struct Flags args;
+    struct Files files;
     args.size = 0;
+    files.size = 0;
     char *temp;
     int length;
     bool used[3] = {false, false, false}; // to keep track of flags used
     //get flags
-    for(int i =0; i <argc; i++){
+    for(int i =1; i <argc; i++){ // start at one as argv[0] is ./myls
         //parse flags and file list
         temp = argv[i];
         if(temp[0]== '-'){ // flag
@@ -66,7 +73,9 @@ int main(int argc, char**argv){
 
                 }
             }
+        }else{ // files to add to file list
+            files.FileList[files.size] = temp;
+            files.size++;
         }
-        
     }
 }
