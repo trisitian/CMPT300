@@ -1,6 +1,8 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
+#include <dirent.h>
 
 
 /**
@@ -14,6 +16,18 @@
  * 
  * 
  * */
+static void localLookup(){
+    DIR *curr;
+    struct dirent *dp;
+    if((curr = opendir(".") == NULL)){
+        perror("Error opening directory \n");
+        exit(1);
+    }
+    while((dp = readdir(curr))!= NULL){
+        printf("%s ", dp->d_name);
+    }
+    closedir(curr);
+}
 struct Flags{
     char flagList[5]; // pretty sure you can only have 3 flags max but have 5 just in case 
     int size; // current amount of flags, will be used when applying options
@@ -78,4 +92,5 @@ int main(int argc, char**argv){
             files.size++;
         }
     }
+    localLookup();
 }
