@@ -16,16 +16,27 @@
  * 
  * 
  * */
-static void noArgs(){
+static void printFiles(int options){
     DIR *curr;
     struct dirent *dp;
-    curr = opendir(".");
-    if((curr == NULL)){
-        perror("Error opening directory \n");
-        exit(1);
-    }
-    while((dp = readdir(curr))!= NULL){
-        printf("%s \n", dp->d_name);
+    if(options == 0){ // no args 
+        curr = opendir(".");
+        if((curr == NULL)){
+            perror("Error opening directory \n");
+            exit(1);
+        }
+        while((dp = readdir(curr))!= NULL){
+            printf("%s \n", dp->d_name);
+        }
+    }else if(options ==1){ // -i
+        curr = opendir(".");
+        if((curr == NULL)){
+            perror("Error opening directory \n");
+            exit(1);
+        }
+        while((dp = readdir(curr))!= NULL){
+            printf("\t%ld \t%s \n", dp->d_ino, dp->d_name); // her example starts with a leading tab
+        }
     }
     closedir(curr);
 }
@@ -94,6 +105,11 @@ int main(int argc, char**argv){
         }
     }
     if(files.size == 0 && args.size == 0){ // call script on just current folder
-        noArgs();
+        printFiles(0);
+    }else if(used[0]){ // clearly needs to be optimized, just trying to get a barebones file working
+        printFiles(1);
+    }else{
+        printf("Unknown error\n");
+        exit(1);
     }
 }
