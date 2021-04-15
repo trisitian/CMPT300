@@ -16,15 +16,16 @@
  * 
  * 
  * */
-static void localLookup(){
+static void noArgs(){
     DIR *curr;
     struct dirent *dp;
-    if((curr = opendir(".") == NULL)){
+    curr = opendir(".");
+    if((curr == NULL)){
         perror("Error opening directory \n");
         exit(1);
     }
     while((dp = readdir(curr))!= NULL){
-        printf("%s ", dp->d_name);
+        printf("%s \n", dp->d_name);
     }
     closedir(curr);
 }
@@ -92,5 +93,7 @@ int main(int argc, char**argv){
             files.size++;
         }
     }
-    localLookup();
+    if(files.size == 0 && args.size == 0){ // call script on just current folder
+        noArgs();
+    }
 }
