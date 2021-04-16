@@ -3,66 +3,46 @@
 #include <string.h>
 #include <stdbool.h>
 #include <dirent.h>
-#include <sys/types.h> // questions asked if theese were able to be used on piazza and we got the go ahead, theese libraries are for stat()
-#include <sys/stat.h>
 #include <pwd.h>
 #include <grp.h>
+// questions asked if these were able to be used on piazza and we got the go ahead, these libraries are for stat()
+#include <sys/types.h> 
+#include <sys/stat.h>
 
-
-/**
- *  Deciding to put legacy code up here, feel free to swap it out with current solutions if you think thats better
- *              if(temp[j] == 'i' || temp[j] == 'R' || temp[j] == 'l'){
-                    args.flagList[args.size] = temp[j];
-                    args.size++;
-                }else{
-                     printf("ERROR %c, OF ARGUMENT %s IS NOT RECOGNIZED:\n VALID ARGUMETS ARE -i, -l, -R (Case Sensitive)\n", temp[j], temp); // keep running with bad flags, notify user
-                }
- * 
- * 
- * */
-
-struct Flags{
-    char flagList[5]; // pretty sure you can only have 3 flags max but have 5 just in case 
-    int size; // current amount of flags, will be used when applying options
-};
+// to keep track of flags used
+bool flagBoolList[3] = {false, false, false}; // [0]: 'i', [1]: 'l', [2]: 'R'
+int flagCount = 0;
 
 struct Files{
-    char *FileList[100]; // doubt they are going to call more than 100 files
-    int size; // current amount of files passed
+    char *FileList[100]; // 100 files limit
+    int size; // amount of files passed
 };
 
-
-struct Flags args;
 struct Files files;
 
 static void printFiles(int options){
     DIR *curr;
     struct dirent *dp;
-    if(options == 0){ // no args 
-        curr = opendir(".");
+
+    // open directory
+    curr = opendir(".");
         if((curr == NULL)){
             perror("Error opening directory \n");
             exit(1);
         }
-        while((dp = readdir(curr))!= NULL){
+
+    if(options == 0){ // no args 
+        while((dp = readdir(curr)) != NULL){
             printf("%s \n", dp->d_name);
         }
+
     }else if(options ==1){ // -i
-        curr = opendir(".");
-        if((curr == NULL)){
-            perror("Error opening directory \n");
-            exit(1);
-        }
-        while((dp = readdir(curr))!= NULL){
+        while((dp = readdir(curr)) != NULL){
             printf("\t%ld \t%s \n", dp->d_ino, dp->d_name); // her example starts with a leading tab
         }
+
     }else if(options == 2){ // -l
-        curr = opendir(".");
         struct stat info;
-        if((curr == NULL)){
-            perror("Error opening directory \n");
-            exit(1);
-        }
         while((dp = readdir(curr))!= NULL){
             if(!stat(dp->d_name, &info)){
                 struct passwd *user = getpwuid(info.st_uid);
@@ -85,14 +65,11 @@ static void printFiles(int options){
                 printf("\t%s\n",dp->d_name);
             }
         }
+
     }else if(options ==3){
         printf("-R called");
+
     }else if(options ==4){
-        curr = opendir(".");
-        if((curr == NULL)){
-            perror("Error opening directory \n");
-            exit(1);
-        }
         char *temp;
         int search = 0;
         while(search <= files.size){
@@ -105,69 +82,70 @@ static void printFiles(int options){
     closedir(curr);
 }
 
+static void flagCheck(int location, char flagChar){
+    if (flagBoolList[location]){
+        // keep running with bad flags, notify user
+        printf("Warning: Argument %c was repeatedly entered\n\n", flagChar);  
+    } else {
+        flagBoolList[location] = true;
+        flagCount++;
+    }
+}
+
 int main(int argc, char**argv){
-    args.size = 0;
     files.size = 0;
     char *temp;
     int length;
-    bool used[3] = {false, false, false}; // to keep track of flags used
+    
     //get flags
-    for(int i =1; i <argc; i++){ // start at one as argv[0] is ./myls
+    for(int i = 1; i < argc; i++){ // start at one as argv[0] is ./myls
         //parse flags and file list
         temp = argv[i];
         if(temp[0]== '-'){ // flag
             length = strlen(temp); // to parse each argument if combining options
             for(int j = 1; j < length; j++){
-                switch(temp[j]){ // am I high or is this the best way to ensure someone doesn't type '-l -l'
+                switch(temp[j]){
                     case 'i':
-                        if(used[0]){
-                            printf("ERROR %c, OF ARGUMENT %s Has already been entered\n", temp[j], temp); // keep running with bad flags, notify user 
-                        }else{
-                            args.flagList[args.size] = temp[j];
-                            args.size++;
-                            used[0] = true;
-                        }
+                        flagCheck(0, 'i');
                         break;
                     case 'l':
-                        if(used[1]){
-                            printf("ERROR %c, OF ARGUMENT %s Has already been entered\n", temp[j], temp); // keep running with bad flags, notify user 
-                        }else{
-                            args.flagList[args.size] = temp[j];
-                            args.size++;
-                            used[1] = true;
-                        }
+                        flagCheck(1, 'l');
                         break;
                     case 'R':
-                        if(used[2]){
-                            printf("ERROR %c, OF ARGUMENT %s Has already been entered\n", temp[j], temp); // keep running with bad flags, notify user 
-                        }else{
-                            args.flagList[args.size] = temp[j];
-                            args.size++;
-                            used[2] = true;
-                        }
+                        flagCheck(2, 'R');
                         break;
                     default:
-                        printf("ERROR %c, OF ARGUMENT %s IS NOT RECOGNIZED:\n VALID ARGUMETS ARE -i, -l, -R (Case Sensitive)\n", temp[j], temp); // keep running with bad flags, notify user  
-
+                        // keep running with bad flags, notify user  
+                        printf("ERROR: %c in argument %s is not recognized.\nValid arguments are: -i, -l, -R (Case Sensitive)\n", temp[j], temp); 
+                        exit(1);
                 }
             }
+
         }else{ // files to add to file list
             files.FileList[files.size] = temp;
             files.size++;
         }
     }
-    if(files.size == 0 && args.size == 0){ // call script on just current folder
+
+    if(files.size == 0 && flagCount == 0){ // call script on just current folder
         printFiles(0);
-    }else if(used[0]){ // clearly needs to be optimized, just trying to get a barebones file working
+
+    // ***************ELSE IF CAUSING NOT PRINTING STACKED ARGUMENTS*********************************
+    }else if(flagBoolList[0]){
         printFiles(1);
-    }else if(used[1]){
+
+    }else if(flagBoolList[1]){
         printFiles(2);
-    }else if(used[3]){
+
+    }else if(flagBoolList[3]){
         printFiles(3);
+
     }else if(files.size > 0){
         printFiles(4);
+
     }else{
-        printf("Unknown error\n");
+        printf("Unknown error.\n");
         exit(1);
     }
+    return 0;
 }
