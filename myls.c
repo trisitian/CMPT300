@@ -88,7 +88,7 @@ void printFiles(struct Files files){
             }
         
             if(flagBoolList[1]){ // -l
-                if(!stat(dp->d_name, &info)){
+                stat(dp->d_name, &info);
                     struct passwd *user = getpwuid(info.st_uid);
                     struct group *group = getgrgid(info.st_gid);
                     printf( (S_ISDIR(info.st_mode)) ? "d" : "-");
@@ -106,7 +106,7 @@ void printFiles(struct Files files){
                     printf("  %s", group->gr_name);
                     printf("  %ld  ", info.st_size);
                     //printf("\t%s", info.st_atim); // not sure how to use this param
-                }
+                
             }
             
             printf("%s\n", dp->d_name);
