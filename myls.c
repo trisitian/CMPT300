@@ -3,6 +3,10 @@
 #include <string.h>
 #include <stdbool.h>
 #include <dirent.h>
+#include <sys/types.h> // questions asked if theese were able to be used on piazza and we got the go ahead, theese libraries are for stat()
+#include <sys/stat.h>
+#include <pwd.h>
+#include <grp.h>
 
 
 /**
@@ -36,6 +40,35 @@ static void printFiles(int options){
         }
         while((dp = readdir(curr))!= NULL){
             printf("\t%ld \t%s \n", dp->d_ino, dp->d_name); // her example starts with a leading tab
+        }
+    }else if(options == 2){ // -l
+        curr = opendir(".");
+        struct stat info;
+        if((curr == NULL)){
+            perror("Error opening directory \n");
+            exit(1);
+        }
+        while((dp = readdir(curr))!= NULL){
+            if(!stat(dp->d_name, &info)){
+                struct passwd *user = getpwuid(info.st_uid);
+                struct group *group = getgrgid(info.st_gid);
+                printf( (S_ISDIR(info.st_mode)) ? "d" : "-");
+                printf( (info.st_mode & S_IRUSR) ? "r" : "-");
+                printf( (info.st_mode & S_IWUSR) ? "w" : "-");
+                printf( (info.st_mode & S_IXUSR) ? "x" : "-");
+                printf( (info.st_mode & S_IRGRP) ? "r" : "-");
+                printf( (info.st_mode & S_IWGRP) ? "w" : "-");
+                printf( (info.st_mode & S_IXGRP) ? "x" : "-");
+                printf( (info.st_mode & S_IROTH) ? "r" : "-");
+                printf( (info.st_mode & S_IWOTH) ? "w" : "-");
+                printf( (info.st_mode & S_IXOTH) ? "x" : "-");
+                printf("\t%ld", info.st_nlink);
+                printf("\t%s", user->pw_name);
+                printf("\t%s", group->gr_name);
+                printf("\t%ld", info.st_size);
+                //printf("\t%s", info.st_atim); // not sure how to use this param
+                printf("\t%s\n",dp->d_name);
+            }
         }
     }
     closedir(curr);
@@ -109,6 +142,7 @@ int main(int argc, char**argv){
     }else if(used[0]){ // clearly needs to be optimized, just trying to get a barebones file working
         printFiles(1);
     }else{
+        printFiles(2);
         printf("Unknown error\n");
         exit(1);
     }
