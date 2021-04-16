@@ -141,8 +141,9 @@ int main(int argc, char**argv){
         printFiles(0);
     }else if(used[0]){ // clearly needs to be optimized, just trying to get a barebones file working
         printFiles(1);
-    }else{
+    }else if(used[1]){
         printFiles(2);
+    }else{
         printf("Unknown error\n");
         exit(1);
     }
