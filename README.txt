@@ -1,3 +1,5 @@
+Stat(2) Documentation
+https://man7.org/linux/man-pages/man2/lstat.2.html
 HOW TO READ ls -l 
 https://linoxide.com/20-ls-command-linux/
 permission bits library 
