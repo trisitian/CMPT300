@@ -8,6 +8,7 @@
 // questions asked if these were able to be used on piazza and we got the go ahead, these libraries are for stat()
 #include <sys/types.h> 
 #include <sys/stat.h>
+#include <glob.h>
 
 // to keep track of flags used
 bool flagBoolList[3] = {false, false, false}; // [0]: 'i', [1]: 'l', [2]: 'R'
@@ -22,8 +23,10 @@ struct Files files;
 
 static void printFiles(){
     DIR *curr;
+    char *temp;
     struct dirent *dp;
     struct stat info;
+    bool localfileCall = false;
 
     // for each custom path it will loop back
     // executing at least once for '.'
@@ -33,7 +36,14 @@ static void printFiles(){
             curr = opendir(".");
 
         } else {
-            curr = opendir(files.FileList[files.size - 1]);
+            temp = files.FileList[files.size -1];
+            stat(temp, &info);
+            if(S_ISDIR(info.st_mode)){
+                curr = opendir(files.FileList[files.size - 1]);
+            }else{
+                localfileCall = true;
+                curr = opendir(".");
+            }
         }
 
         if((curr == NULL)){
@@ -54,6 +64,15 @@ static void printFiles(){
         
         // read directory
         while((dp = readdir(curr)) != NULL){
+            if(localfileCall){
+                if(strcmp(temp, dp->d_name) == 0){
+                    localfileCall = false;
+                    printf("%s \n", temp);
+                    break;
+                }else{
+                    continue;
+                }
+            }
             if(flagBoolList[0]){ // -i
                 printf("%ld  ", dp->d_ino);
             }
@@ -86,7 +105,10 @@ static void printFiles(){
             
             printf("%s\n", dp->d_name);
         }
-
+        if(localfileCall){
+            printf("%s is not in the current directory\n", temp);
+            localfileCall = false;
+        }
         closedir(curr);
         files.size--;
     } while (files.size > 0);
