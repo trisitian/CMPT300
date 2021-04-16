@@ -19,9 +19,7 @@ struct Files{
     int size; // amount of files passed
 };
 
-struct Files files;
-
-static void printFiles(){
+void printFiles(struct Files files){
     DIR *curr;
     char *temp;
     struct dirent *dp;
@@ -47,24 +45,13 @@ static void printFiles(){
         }
 
         if((curr == NULL)){
-                printf("Error opening directory %s", files.FileList[files.size - 1]);
+                printf("Error opening directory %s\n", files.FileList[files.size - 1]);
                 exit(1);
             }
 
-        // DEPRECATED? Maybe move into -R?
-        // if(files.size > 0){
-        //     char *temp;
-        //     int search = 0;
-        //     while(search <= files.size){
-        //         temp = files.FileList[search];
-        //         while((dp = readdir(curr))!= NULL){
-        //             // compare each file
-        //     }
-        // }
-        
         // read directory
         while((dp = readdir(curr)) != NULL){
-            if(localfileCall){
+            if(localfileCall){ // read file
                 if(strcmp(temp, dp->d_name) == 0){
                     localfileCall = false;
                     printf("%s \n", temp);
@@ -73,6 +60,25 @@ static void printFiles(){
                     continue;
                 }
             }
+
+            if(dp->d_type == DT_DIR && flagBoolList[2]){ // -R
+                if(strcmp(dp->d_name, ".") != 0 && strcmp(dp->d_name, "..") != 0){
+                    struct Files newFiles;
+                    newFiles.FileList[0] = malloc(sizeof(char) * 255);
+                    strcpy(newFiles.FileList[0], "");
+                    if (files.size == 0){
+                        strcat(newFiles.FileList[0], "./");
+                    } else {
+                        strcat(newFiles.FileList[0], files.FileList[files.size - 1]);
+                        strcat(newFiles.FileList[0], "/");
+                    }
+                    strcat(newFiles.FileList[0], dp->d_name);
+                    newFiles.size = 1;
+                    printFiles(newFiles);
+                    free(newFiles.FileList[0]);
+                }
+            }
+
             if(flagBoolList[0]){ // -i
                 printf("%ld  ", dp->d_ino);
             }
@@ -98,10 +104,6 @@ static void printFiles(){
                     //printf("\t%s", info.st_atim); // not sure how to use this param
                 }
             }
-
-            if(flagBoolList[2]){ // -R
-                printf("  -R called, but feature not implemented.  ");
-            }
             
             printf("%s\n", dp->d_name);
         }
@@ -114,7 +116,7 @@ static void printFiles(){
     } while (files.size > 0);
 }
 
-static void flagCheck(int location, char flagChar){
+void flagCheck(int location, char flagChar){
     if (flagBoolList[location]){
         // keep running with bad flags, notify user
         printf("Warning: Argument %c was repeatedly entered\n\n", flagChar);  
@@ -125,6 +127,7 @@ static void flagCheck(int location, char flagChar){
 }
 
 int main(int argc, char**argv){
+    struct Files files;
     files.size = 0;
     char *argument;
     int length;
@@ -159,7 +162,7 @@ int main(int argc, char**argv){
         }
     }
 
-    printFiles();
+    printFiles(files);
 
     return 0;
 }
