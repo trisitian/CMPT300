@@ -62,9 +62,12 @@ void printFiles(struct Files files){
             }
 
             if(dp->d_type == DT_DIR && flagBoolList[2]){ // -R
+                // skip . and .. directories 
                 if(strcmp(dp->d_name, ".") != 0 && strcmp(dp->d_name, "..") != 0){
                     struct Files newFiles;
                     newFiles.FileList[0] = malloc(sizeof(char) * 255);
+                    
+                    // use folder name as the directory to be accessed
                     strcpy(newFiles.FileList[0], "");
                     if (files.size == 0){
                         strcat(newFiles.FileList[0], "./");
@@ -74,7 +77,8 @@ void printFiles(struct Files files){
                     }
                     strcat(newFiles.FileList[0], dp->d_name);
                     newFiles.size = 1;
-                    printFiles(newFiles);
+
+                    printFiles(newFiles); // recursively access subfolder
                     free(newFiles.FileList[0]);
                 }
             }
