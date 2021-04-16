@@ -20,6 +20,21 @@
  * 
  * 
  * */
+
+struct Flags{
+    char flagList[5]; // pretty sure you can only have 3 flags max but have 5 just in case 
+    int size; // current amount of flags, will be used when applying options
+};
+
+struct Files{
+    char *FileList[100]; // doubt they are going to call more than 100 files
+    int size; // current amount of files passed
+};
+
+
+struct Flags args;
+struct Files files;
+
 static void printFiles(int options){
     DIR *curr;
     struct dirent *dp;
@@ -70,23 +85,27 @@ static void printFiles(int options){
                 printf("\t%s\n",dp->d_name);
             }
         }
+    }else if(options ==3){
+        printf("-R called");
+    }else if(options ==4){
+        curr = opendir(".");
+        if((curr == NULL)){
+            perror("Error opening directory \n");
+            exit(1);
+        }
+        char *temp;
+        int search = 0;
+        while(search <= files.size){
+            temp = files.FileList[search];
+            while((dp = readdir(curr))!= NULL){
+                // compare each file
+            }
+        }
     }
     closedir(curr);
 }
-struct Flags{
-    char flagList[5]; // pretty sure you can only have 3 flags max but have 5 just in case 
-    int size; // current amount of flags, will be used when applying options
-};
-
-struct Files{
-    char *FileList[100]; // doubt they are going to call more than 100 files
-    int size; // current amount of files passed
-};
-
 
 int main(int argc, char**argv){
-    struct Flags args;
-    struct Files files;
     args.size = 0;
     files.size = 0;
     char *temp;
@@ -143,6 +162,10 @@ int main(int argc, char**argv){
         printFiles(1);
     }else if(used[1]){
         printFiles(2);
+    }else if(used[3]){
+        printFiles(3);
+    }else if(files.size > 0){
+        printFiles(4);
     }else{
         printf("Unknown error\n");
         exit(1);
