@@ -104,17 +104,17 @@ static void flagCheck(int location, char flagChar){
 
 int main(int argc, char**argv){
     files.size = 0;
-    char *temp;
+    char *argument;
     int length;
     
-    //get flags
     for(int i = 1; i < argc; i++){ // start at one as argv[0] is ./myls
-        //parse flags and file list
-        temp = argv[i];
-        if(temp[0]== '-'){ // flag
-            length = strlen(temp); // to parse each argument if combining options
+        argument = argv[i];
+
+        if(argument[0]== '-'){ // flags
+            // parse argument if contains multiple flags
+            length = strlen(argument); 
             for(int j = 1; j < length; j++){
-                switch(temp[j]){
+                switch(argument[j]){
                     case 'i':
                         flagCheck(0, 'i');
                         break;
@@ -126,13 +126,13 @@ int main(int argc, char**argv){
                         break;
                     default:
                         // keep running with bad flags, notify user  
-                        printf("ERROR: %c in argument %s is not recognized.\nValid arguments are: -i, -l, -R (Case Sensitive)\n", temp[j], temp); 
+                        printf("ERROR: %c in argument %s is not recognized.\nValid arguments are: -i, -l, -R (Case Sensitive)\n", argument[j], argument); 
                         exit(1);
                 }
             }
 
-        }else{ // files to add to file list
-            files.FileList[files.size] = temp;
+        }else{ // files
+            files.FileList[files.size] = argument;
             files.size++;
         }
     }
