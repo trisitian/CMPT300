@@ -20,6 +20,7 @@ struct Files{
     int size; // amount of files passed
 };
 
+
 char dates[12][4] = {"Jan", "Feb", "Mar", "Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"};
 void printFiles(struct Files files){
     DIR *curr;
