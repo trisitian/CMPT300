@@ -9,6 +9,7 @@
 #include <sys/types.h> 
 #include <sys/stat.h>
 #include <glob.h>
+#include <time.h>
 
 // to keep track of flags used
 bool flagBoolList[3] = {false, false, false}; // [0]: 'i', [1]: 'l', [2]: 'R'
@@ -19,6 +20,7 @@ struct Files{
     int size; // amount of files passed
 };
 
+char dates[12][4] = {"Jan", "Feb", "Mar", "Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"};
 void printFiles(struct Files files){
     DIR *curr;
     char *temp;
@@ -91,6 +93,7 @@ void printFiles(struct Files files){
                 stat(dp->d_name, &info);
                     struct passwd *user = getpwuid(info.st_uid);
                     struct group *group = getgrgid(info.st_gid);
+                    struct tm *date = localtime(&info.st_atim.tv_sec);
                     printf( (S_ISDIR(info.st_mode)) ? "d" : "-");
                     printf( (info.st_mode & S_IRUSR) ? "r" : "-");
                     printf( (info.st_mode & S_IWUSR) ? "w" : "-");
@@ -105,7 +108,7 @@ void printFiles(struct Files files){
                     printf("  %s", user->pw_name);
                     printf("  %s", group->gr_name);
                     printf("  %ld  ", info.st_size);
-                    //printf("\t%s", info.st_atim); // not sure how to use this param
+                    printf("\t%s %d %d %d:%d\t", dates[date->tm_mon -1], date->tm_mday, date->tm_year+1900, date->tm_hour, date->tm_min); // not sure how to use this param
                 
             }
             

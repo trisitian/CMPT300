@@ -8,3 +8,5 @@ getting a name from struct st_uid
 https://pubs.opengroup.org/onlinepubs/000095399/basedefs/pwd.h.html
 getting a group from struct gid_t
 https://www.mkssoftware.com/docs/man5/struct_group.5.asp
+converting a timespce to tm 
+https://stackoverflow.com/questions/8304259/formatting-struct-timespec#8304728
