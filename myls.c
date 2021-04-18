@@ -20,7 +20,12 @@ struct Files{
     int size; // amount of files passed
 };
 
+// for date printing
 char dates[12][4] = {"Jan", "Feb", "Mar", "Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"};
+
+// stores list of dirents acquired from scandir
+// keeps track of how many files in each set of dirents
+// keeps track of how many sets of dirents there are
 struct dirList{
     struct dirent **direntList[10000];
     int numOfFiles[10000];
@@ -29,56 +34,28 @@ struct dirList{
 struct dirList direntList;
 int dirCount;
 
-// void combineDirentLists(struct dirent **direntListB, int listBSize){
-//     struct dirent **newDirentList = malloc(sizeof(struct dirent *) * (listBSize + numOfFiles + 1));
-//     int a = 0, b = 0;
-
-//     for (int i = 0; i < (listBSize + numOfFiles); i++){
-//         if (a < numOfFiles && b < listBSize){
-//             if (alphasort(&direntList[a], &direntListB[b]) < 0){
-//                 newDirentList[i] = direntList[a];
-//                 a++;
-//             } else {
-//                 newDirentList[i] = direntListB[b];
-//                 b++;
-//             }
-//         } else if (a >= numOfFiles) {
-//             newDirentList[i] = direntListB[b];
-//             b++;
-//         } else {
-//             newDirentList[i] = direntList[a];
-//             a++;
-//         }
-//     }
-//     direntList = (struct dirent **)realloc(direntList, sizeof(newDirentList));
-//     for (int i = 0; i < (listBSize + numOfFiles); i++){
-//         direntList[i] = newDirentList[i];
-//     }
-//     free(newDirentList);
-//     numOfFiles += listBSize;
-// }
-
 void readFiles(char* dir){
     
+    // store directory alphabetically and store size
     direntList.numOfFiles[direntList.size] = scandir(dir, &direntList.direntList[direntList.size], NULL, alphasort);
-    // printf("\n");
-    
     if (direntList.numOfFiles[direntList.size] == -1){
         printf("Error indexing directory %s\n", dir);
         exit(1);
     }
-    // combineDirentLists(dirList, amount);
     direntList.size++;
     
-
     if(flagBoolList[2]){ // -R
         struct dirent *dp;
         int temp = direntList.size - 1;
 
+        // for each dirent check if it's folder type
         for(int i = 0; i < direntList.numOfFiles[temp]; i++){
             dp = direntList.direntList[temp][i];
+            
             if (dp->d_type == DT_DIR){
+                // exclude . and .. directories
                 if(strcmp(dp->d_name, ".") != 0 && strcmp(dp->d_name, "..") != 0){
+                    
                     char *newDir = (char*)malloc(sizeof(char*) * 255);
 
                     // use folder name as the directory to be accessed
@@ -100,7 +77,6 @@ void readFiles(char* dir){
 
 void printFiles(struct Files files){
     char *dir = "";
-    // DIR *curr;
     char *temp;
     struct dirent *dp;
     struct stat info;
@@ -110,15 +86,18 @@ void printFiles(struct Files files){
     // executing at least once for '.'
     do{
         // open directory
-        if (files.size == 0){
+        if (files.size == 0){ // if no extra path arguments
             dir = ".";
 
-        } else {
+        
+        } else { // check if extra argument is path or file
             temp = files.FileList[files.size -1];
             stat(temp, &info);
-            if(S_ISDIR(info.st_mode)){
+
+            if(S_ISDIR(info.st_mode)){ // file
                 dir = files.FileList[files.size - 1];
-            }else{
+            
+            }else{ // path
                 localfileCall = true;
                 dir = ".";
             }
@@ -134,8 +113,8 @@ void printFiles(struct Files files){
             readFiles(dir);
         }
 
-        for(int x = dirCount; x <= direntList.size; x++){
-            for(int i = 0; i < direntList.numOfFiles[x]; i++){
+        for(int x = dirCount; x <= direntList.size; x++){ // traverse through sets of dirents
+            for(int i = 0; i < direntList.numOfFiles[x]; i++){ // traverse through individual dirents
             
                 dp = direntList.direntList[x][i];
                 
@@ -144,6 +123,7 @@ void printFiles(struct Files files){
                         localfileCall = false;
                         printf("%s \n", temp);
                         break;
+
                     }else{
                         continue;
                     }
@@ -172,8 +152,9 @@ void printFiles(struct Files files){
                         printf("  %s", user->pw_name);
                         printf("  %s", group->gr_name);
                         printf("  %ld  ", info.st_size);
-                        printf("\t%s %d %d %d:%d\t", dates[date->tm_mon -1], date->tm_mday, date->tm_year+1900, date->tm_hour, date->tm_min); // not sure how to use this param  
+                        printf("\t%s %d %d %d:%d\t", dates[date->tm_mon -1], date->tm_mday, date->tm_year+1900, date->tm_hour, date->tm_min);
                 }
+                // print name
                 printf("%s\n", dp->d_name);
             }
         }
@@ -182,7 +163,6 @@ void printFiles(struct Files files){
             printf("%s is not in the current directory\n", temp);
             localfileCall = false;
         }
-        // closedir(curr);
         files.size--;
     } while (files.size > 0);
 }
