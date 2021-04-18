@@ -20,10 +20,75 @@ struct Files{
     int size; // amount of files passed
 };
 
-
 char dates[12][4] = {"Jan", "Feb", "Mar", "Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"};
+struct dirent **direntList;
+int numOfFiles = 0;
+
+// void combineDirentLists(struct dirent **direntListB, int listBSize){
+//     struct dirent **newDirentList = malloc(sizeof(struct dirent **) * (listBSize + numOfFiles + 1));
+//     int a = 0, b = 0;
+
+//     for (int i = 0; i < (listBSize + numOfFiles); i++){
+//         if (a < numOfFiles && b < listBSize){
+//             if (alphasort(&direntList[a], &direntListB[b]) < 0){
+//                 newDirentList[i] = direntList[a];
+//                 a++;
+//             } else {
+//                 newDirentList[i] = direntListB[b];
+//                 b++;
+//             }
+//         } else if (a >= numOfFiles) {
+//             newDirentList[i] = direntListB[b];
+//                 b++;
+//         } else {
+//             newDirentList[i] = direntList[a];
+//             a++;
+//         }
+//     }
+//     direntList = newDirentList;
+//     free(newDirentList);
+// }
+
+void readFiles(char* dir, struct dirent **dirList){
+    
+    numOfFiles = scandir(dir, &direntList, NULL, alphasort);
+    // printf("%i", numOfFiles);
+    if (numOfFiles == -1){
+        printf("Error indexing directory %s\n", dir);
+        exit(1);
+    }
+
+    if(flagBoolList[2]){ // -R
+        struct dirent **newDirentList;
+        struct dirent *dp;
+
+        for(int i = 0; i < numOfFiles; i++){
+            dp = direntList[i];
+            if (dp->d_type == DT_DIR){
+                if(strcmp(dp->d_name, ".") != 0 && strcmp(dp->d_name, "..") != 0){
+                    char *newDir = malloc(sizeof(char*) * 255);
+
+                    // use folder name as the directory to be accessed
+                    if (strcmp(dir, ".") == 0){
+                        strcpy(newDir, "./");
+                    } else {
+                        strcpy(newDir, dir);
+                        strcat(newDir, "/");
+                    }
+                    strcat(newDir, dp->d_name);
+
+                    readFiles(newDir, newDirentList); // recursively access subfolder
+                    free(newDir);
+                }
+            }
+            // combineDirentLists(newDirentList);   
+        }
+    }
+}
+
 void printFiles(struct Files files){
-    DIR *curr;
+    char *dir = "";
+    // DIR *curr;
     char *temp;
     struct dirent *dp;
     struct stat info;
@@ -34,26 +99,32 @@ void printFiles(struct Files files){
     do{
         // open directory
         if (files.size == 0){
-            curr = opendir(".");
+            dir = ".";
 
         } else {
             temp = files.FileList[files.size -1];
             stat(temp, &info);
             if(S_ISDIR(info.st_mode)){
-                curr = opendir(files.FileList[files.size - 1]);
+                dir = files.FileList[files.size - 1];
             }else{
                 localfileCall = true;
-                curr = opendir(".");
+                dir = ".";
             }
         }
 
-        if((curr == NULL)){
+        if(strcmp(dir, "") == 0){
                 printf("Error opening directory %s\n", files.FileList[files.size - 1]);
                 exit(1);
             }
 
         // read directory
-        while((dp = readdir(curr)) != NULL){
+        if (!localfileCall){
+            readFiles(dir, direntList);
+        }
+
+        for(int i = 0; i < numOfFiles; i++){
+            dp = direntList[i];
+            
             if(localfileCall){ // read file
                 if(strcmp(temp, dp->d_name) == 0){
                     localfileCall = false;
@@ -61,28 +132,6 @@ void printFiles(struct Files files){
                     break;
                 }else{
                     continue;
-                }
-            }
-
-            if(dp->d_type == DT_DIR && flagBoolList[2]){ // -R
-                // skip . and .. directories 
-                if(strcmp(dp->d_name, ".") != 0 && strcmp(dp->d_name, "..") != 0){
-                    struct Files newFiles;
-                    newFiles.FileList[0] = malloc(sizeof(char) * 255);
-                    
-                    // use folder name as the directory to be accessed
-                    strcpy(newFiles.FileList[0], "");
-                    if (files.size == 0){
-                        strcat(newFiles.FileList[0], "./");
-                    } else {
-                        strcat(newFiles.FileList[0], files.FileList[files.size - 1]);
-                        strcat(newFiles.FileList[0], "/");
-                    }
-                    strcat(newFiles.FileList[0], dp->d_name);
-                    newFiles.size = 1;
-
-                    printFiles(newFiles); // recursively access subfolder
-                    free(newFiles.FileList[0]);
                 }
             }
 
@@ -109,17 +158,15 @@ void printFiles(struct Files files){
                     printf("  %s", user->pw_name);
                     printf("  %s", group->gr_name);
                     printf("  %ld  ", info.st_size);
-                    printf("\t%s %d %d %d:%d\t", dates[date->tm_mon -1], date->tm_mday, date->tm_year+1900, date->tm_hour, date->tm_min); // not sure how to use this param
-                
+                    printf("\t%s %d %d %d:%d\t", dates[date->tm_mon -1], date->tm_mday, date->tm_year+1900, date->tm_hour, date->tm_min); // not sure how to use this param  
             }
-            
             printf("%s\n", dp->d_name);
         }
         if(localfileCall){
             printf("%s is not in the current directory\n", temp);
             localfileCall = false;
         }
-        closedir(curr);
+        // closedir(curr);
         files.size--;
     } while (files.size > 0);
 }
