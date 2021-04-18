@@ -21,11 +21,16 @@ struct Files{
 };
 
 char dates[12][4] = {"Jan", "Feb", "Mar", "Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"};
-struct dirent **direntList;
-int numOfFiles = 0;
+struct dirList{
+    struct dirent **direntList[10000];
+    int numOfFiles[10000];
+    int size;
+};
+struct dirList direntList;
+int dirCount;
 
 // void combineDirentLists(struct dirent **direntListB, int listBSize){
-//     struct dirent **newDirentList = malloc(sizeof(struct dirent **) * (listBSize + numOfFiles + 1));
+//     struct dirent **newDirentList = malloc(sizeof(struct dirent *) * (listBSize + numOfFiles + 1));
 //     int a = 0, b = 0;
 
 //     for (int i = 0; i < (listBSize + numOfFiles); i++){
@@ -39,34 +44,42 @@ int numOfFiles = 0;
 //             }
 //         } else if (a >= numOfFiles) {
 //             newDirentList[i] = direntListB[b];
-//                 b++;
+//             b++;
 //         } else {
 //             newDirentList[i] = direntList[a];
 //             a++;
 //         }
 //     }
-//     direntList = newDirentList;
+//     direntList = (struct dirent **)realloc(direntList, sizeof(newDirentList));
+//     for (int i = 0; i < (listBSize + numOfFiles); i++){
+//         direntList[i] = newDirentList[i];
+//     }
 //     free(newDirentList);
+//     numOfFiles += listBSize;
 // }
 
-void readFiles(char* dir, struct dirent **dirList){
+void readFiles(char* dir){
     
-    numOfFiles = scandir(dir, &direntList, NULL, alphasort);
-    // printf("%i", numOfFiles);
-    if (numOfFiles == -1){
+    direntList.numOfFiles[direntList.size] = scandir(dir, &direntList.direntList[direntList.size], NULL, alphasort);
+    // printf("\n");
+    
+    if (direntList.numOfFiles[direntList.size] == -1){
         printf("Error indexing directory %s\n", dir);
         exit(1);
     }
+    // combineDirentLists(dirList, amount);
+    direntList.size++;
+    
 
     if(flagBoolList[2]){ // -R
-        struct dirent **newDirentList;
         struct dirent *dp;
+        int temp = direntList.size - 1;
 
-        for(int i = 0; i < numOfFiles; i++){
-            dp = direntList[i];
+        for(int i = 0; i < direntList.numOfFiles[temp]; i++){
+            dp = direntList.direntList[temp][i];
             if (dp->d_type == DT_DIR){
                 if(strcmp(dp->d_name, ".") != 0 && strcmp(dp->d_name, "..") != 0){
-                    char *newDir = malloc(sizeof(char*) * 255);
+                    char *newDir = (char*)malloc(sizeof(char*) * 255);
 
                     // use folder name as the directory to be accessed
                     if (strcmp(dir, ".") == 0){
@@ -77,11 +90,10 @@ void readFiles(char* dir, struct dirent **dirList){
                     }
                     strcat(newDir, dp->d_name);
 
-                    readFiles(newDir, newDirentList); // recursively access subfolder
+                    readFiles(newDir); // recursively access subfolder
                     free(newDir);
                 }
             }
-            // combineDirentLists(newDirentList);   
         }
     }
 }
@@ -119,49 +131,53 @@ void printFiles(struct Files files){
 
         // read directory
         if (!localfileCall){
-            readFiles(dir, direntList);
+            readFiles(dir);
         }
 
-        for(int i = 0; i < numOfFiles; i++){
-            dp = direntList[i];
+        for(int x = dirCount; x <= direntList.size; x++){
+            for(int i = 0; i < direntList.numOfFiles[x]; i++){
             
-            if(localfileCall){ // read file
-                if(strcmp(temp, dp->d_name) == 0){
-                    localfileCall = false;
-                    printf("%s \n", temp);
-                    break;
-                }else{
-                    continue;
+                dp = direntList.direntList[x][i];
+                
+                if(localfileCall){ // read file
+                    if(strcmp(temp, dp->d_name) == 0){
+                        localfileCall = false;
+                        printf("%s \n", temp);
+                        break;
+                    }else{
+                        continue;
+                    }
                 }
-            }
 
-            if(flagBoolList[0]){ // -i
-                printf("%ld  ", dp->d_ino);
+                if(flagBoolList[0]){ // -i
+                    printf("%ld  ", dp->d_ino);
+                }
+            
+                if(flagBoolList[1]){ // -l
+                    stat(dp->d_name, &info);
+                        struct passwd *user = getpwuid(info.st_uid);
+                        struct group *group = getgrgid(info.st_gid);
+                        struct tm *date = localtime(&info.st_atim.tv_sec);
+                        printf( (S_ISDIR(info.st_mode)) ? "d" : "-");
+                        printf( (info.st_mode & S_IRUSR) ? "r" : "-");
+                        printf( (info.st_mode & S_IWUSR) ? "w" : "-");
+                        printf( (info.st_mode & S_IXUSR) ? "x" : "-");
+                        printf( (info.st_mode & S_IRGRP) ? "r" : "-");
+                        printf( (info.st_mode & S_IWGRP) ? "w" : "-");
+                        printf( (info.st_mode & S_IXGRP) ? "x" : "-");
+                        printf( (info.st_mode & S_IROTH) ? "r" : "-");
+                        printf( (info.st_mode & S_IWOTH) ? "w" : "-");
+                        printf( (info.st_mode & S_IXOTH) ? "x" : "-");
+                        printf("  %ld", info.st_nlink);
+                        printf("  %s", user->pw_name);
+                        printf("  %s", group->gr_name);
+                        printf("  %ld  ", info.st_size);
+                        printf("\t%s %d %d %d:%d\t", dates[date->tm_mon -1], date->tm_mday, date->tm_year+1900, date->tm_hour, date->tm_min); // not sure how to use this param  
+                }
+                printf("%s\n", dp->d_name);
             }
-        
-            if(flagBoolList[1]){ // -l
-                stat(dp->d_name, &info);
-                    struct passwd *user = getpwuid(info.st_uid);
-                    struct group *group = getgrgid(info.st_gid);
-                    struct tm *date = localtime(&info.st_atim.tv_sec);
-                    printf( (S_ISDIR(info.st_mode)) ? "d" : "-");
-                    printf( (info.st_mode & S_IRUSR) ? "r" : "-");
-                    printf( (info.st_mode & S_IWUSR) ? "w" : "-");
-                    printf( (info.st_mode & S_IXUSR) ? "x" : "-");
-                    printf( (info.st_mode & S_IRGRP) ? "r" : "-");
-                    printf( (info.st_mode & S_IWGRP) ? "w" : "-");
-                    printf( (info.st_mode & S_IXGRP) ? "x" : "-");
-                    printf( (info.st_mode & S_IROTH) ? "r" : "-");
-                    printf( (info.st_mode & S_IWOTH) ? "w" : "-");
-                    printf( (info.st_mode & S_IXOTH) ? "x" : "-");
-                    printf("  %ld", info.st_nlink);
-                    printf("  %s", user->pw_name);
-                    printf("  %s", group->gr_name);
-                    printf("  %ld  ", info.st_size);
-                    printf("\t%s %d %d %d:%d\t", dates[date->tm_mon -1], date->tm_mday, date->tm_year+1900, date->tm_hour, date->tm_min); // not sure how to use this param  
-            }
-            printf("%s\n", dp->d_name);
         }
+        dirCount = direntList.size;
         if(localfileCall){
             printf("%s is not in the current directory\n", temp);
             localfileCall = false;
@@ -186,6 +202,8 @@ int main(int argc, char**argv){
     files.size = 0;
     char *argument;
     int length;
+    direntList.size = 0;
+    dirCount = 0;
     
     for(int i = 1; i < argc; i++){ // start at one as argv[0] is ./myls
         argument = argv[i];

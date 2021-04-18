@@ -10,3 +10,9 @@ getting a group from struct gid_t
 https://www.mkssoftware.com/docs/man5/struct_group.5.asp
 converting a timespce to tm 
 https://stackoverflow.com/questions/8304259/formatting-struct-timespec#8304728
+
+https://www.gnu.org/software/libc/manual/html_node/Scanning-Directory-Content.html
+
+https://www.tutorialspoint.com/c_standard_library/c_function_realloc.htm
+
+https://stackoverflow.com/questions/10326586/segmentation-fault-with-strcpy
