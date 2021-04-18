@@ -76,42 +76,63 @@ void readFiles(char* dir){
 }
 
 void printFiles(struct Files files){
-    char *dir = "";
-    char *temp;
+    char *dir = (char*) malloc(sizeof(char*) * 1000);
+    char *temp = NULL;
     struct dirent *dp;
     struct stat info;
     bool localfileCall = false;
+    bool fileNotFound = false;
 
     // for each custom path it will loop back
     // executing at least once for '.'
     do{
         // open directory
         if (files.size == 0){ // if no extra path arguments
-            dir = ".";
+            strcpy(dir, ".");
 
-        
         } else { // check if extra argument is path or file
-            temp = files.FileList[files.size -1];
+            temp = files.FileList[files.size - 1];
             stat(temp, &info);
 
-            if(S_ISDIR(info.st_mode)){ // file
-                dir = files.FileList[files.size - 1];
+            if(S_ISDIR(info.st_mode)){ // path
+                strcpy(dir, files.FileList[files.size - 1]);
             
-            }else{ // path
+            }else{ // file
                 localfileCall = true;
-                dir = ".";
+                fileNotFound = true;
+
+                // grab path to file
+                char* buf = NULL;
+                char* token = strtok(temp, "/");
+
+                while(token != NULL){
+                    if (buf != NULL){
+                        strcat(dir, "/");
+                        strcat(dir, buf);
+                    } else {
+                        buf = token;
+                        token = strtok(NULL, "/");
+                        if (token == NULL){
+                            strcpy(dir, ".");
+                            break;
+                        }
+                        continue;                            
+                    } 
+
+                    buf = token;
+                    token = strtok(NULL, "/");          
+                }
+                temp = buf;
             }
         }
 
-        if(strcmp(dir, "") == 0){
-                printf("Error opening directory %s\n", files.FileList[files.size - 1]);
-                exit(1);
-            }
+        if(dir == NULL){
+            printf("Error opening directory %s\n", files.FileList[files.size - 1]);
+            exit(1);
+        }
 
         // read directory
-        if (!localfileCall){
-            readFiles(dir);
-        }
+        readFiles(dir);
 
         for(int x = dirCount; x <= direntList.size; x++){ // traverse through sets of dirents
             for(int i = 0; i < direntList.numOfFiles[x]; i++){ // traverse through individual dirents
@@ -120,9 +141,7 @@ void printFiles(struct Files files){
                 
                 if(localfileCall){ // read file
                     if(strcmp(temp, dp->d_name) == 0){
-                        localfileCall = false;
-                        printf("%s \n", temp);
-                        break;
+                        fileNotFound = false;
 
                     }else{
                         continue;
@@ -159,12 +178,14 @@ void printFiles(struct Files files){
             }
         }
         dirCount = direntList.size;
-        if(localfileCall){
-            printf("%s is not in the current directory\n", temp);
-            localfileCall = false;
+        if(fileNotFound){
+            printf("%s is not found\n", temp);
         }
+        localfileCall = false;
+        fileNotFound = false;
         files.size--;
     } while (files.size > 0);
+    free(dir);
 }
 
 void flagCheck(int location, char flagChar){
