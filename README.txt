@@ -7,6 +7,10 @@ This assignment is a collaboration between Jinhan Liu (301430717) and Tristian L
 
 Collectively we spent about 40 hours on the project.
 (Tristian): 
+This assignment only reminded me of how greatfull I am for modern programming languages. So much of the diffiulty surrounding 
+this assignment was in relation to dealing with the proper implemntation of pointers (especially pointers to pointers). I did
+get a greater understanding of bitwise operators and a few more system calls with the implemntation which was quite nice. I would 
+only say this assignment took longer then it should of do to a lack of features in core c.
 
 (Jinhan): This assignment definitely required a lot of research into scandir(). We originally took a different
 approach to reading files, but in order to achieve sorting the code was rewritten to use the built-in alphasort.
