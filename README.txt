@@ -5,12 +5,14 @@ This assignment is a collaboration between Jinhan Liu (301430717) and Tristian L
 *PLEASE NOTE WE WILL BE USING 2 LATE DAYS EACH FOR THIS ASSIGNMENT
 ******************************************************************
 
+Collectively we spent about 40 hours on the project.
+(Tristian): 
 
-
-
-
-
-
+(Jinhan): This assignment definitely required a lot of research into scandir(). We originally took a different
+approach to reading files, but in order to achieve sorting the code was rewritten to use the built-in alphasort.
+This is the first project for this semester where we did not use Jira to track issues and progress, which led to
+a slow start and many reimplementation of methods because there weren't much planning. However, the assignment
+was overall manageable and not overly intimidating.
 
 
 Resources:
